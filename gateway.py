@@ -7,9 +7,7 @@ import json
 import asyncio, aiohttp
 import logging
 
-#_LOGGER = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-_LOGGER = logging.getLogger('pyatag')
+_LOGGER = logging.getLogger(__name__)
 
 class atagDataStore:
 
@@ -25,13 +23,10 @@ class atagDataStore:
             _LOGGER.error("Not a valid session: %s", type(session).__name__ )
 
         self.scan_interval = scan_interval
-        _LOGGER.debug(self.host_data)
-#        self.retrieve_msg = set_retrieve_msg(self.host_data)
         self.data = {}
         self.sensors = sensors
         self.sensordata = {}
-        self.report_time = None
-        self._paired = False
+        self.paired = False
 
     async def async_update(self):
         """Read data from thermostat."""
@@ -81,7 +76,7 @@ class atagDataStore:
         return result
 
     async def async_check_pair_status(self):
-        if self._paired:
+        if self.paired:
             return True
         try:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
@@ -91,9 +86,9 @@ class atagDataStore:
             _LOGGER.error("Pairing failed\n%s\n%s",self.host_data.pair_msg, self.host_data.baseurl)
             return False
         if status == 2:
-            self._paired = True
+            self.paired = True
             _LOGGER.debug("AtagDataStore paired")
-            return self._paired
+            return self.paired
         elif status == 1:
             print("Waiting for pairing confirmation")
         elif status == 3:
@@ -101,5 +96,5 @@ class atagDataStore:
         elif status == 0:
             print("No status returned from ATAG One")
         _LOGGER.warning("Atag not paired!\n%s", json_data)
-        self._paired = False
-        return self._paired
+        self.paired = False
+        return self.paired

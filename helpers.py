@@ -10,7 +10,6 @@ from pyatag.errors import AtagException, RequestError, ResponseError, Response40
 MAC = 'mac'
 HOSTNAME = 'hostname'
 MAIL = 'email'
-#DEVICE  = "6808-1401-3107_15-05-003-171"
 STATE_UNKNOWN = 'unknown'
 URL = 'url'
 
