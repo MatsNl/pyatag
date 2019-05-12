@@ -13,7 +13,6 @@ setup(
   install_requires=[
         'asyncio',
         'aiohttp',
-        'numbers',
         'netifaces'
     ],
   classifiers=[
