@@ -1,11 +1,14 @@
+"""Helpers for the ATAG connection"""
+
 from datetime import datetime, timezone, timedelta
-from aiohttp import client_exceptions
 from asyncio import TimeoutError
 from numbers import Number
 import json
 
-from pyatag.const import REQUEST_INFO, MODES, INT_MODES, HTTP_HEADER, DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT
-from pyatag.errors import AtagException, RequestError, ResponseError, Response404Error
+from aiohttp import client_exceptions
+from pyatag.errors import AtagException, RequestError, ResponseError  # , Response404Error
+from pyatag.const import (REQUEST_INFO, MODES, INT_MODES, HTTP_HEADER,
+                          DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT)
 
 MAC = 'mac'
 HOSTNAME = 'hostname'
@@ -13,15 +16,17 @@ MAIL = 'email'
 STATE_UNKNOWN = 'unknown'
 URL = 'url'
 
+
 def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
+    """Store connection information in dict."""
     if host is None:
         raise AtagException("Invalid/None host data provided")
     import netifaces
     import socket
     data = {
-        URL: ''.join(['http://', str(host), ':', str(port),'/']),
+        URL: ''.join(['http://', str(host), ':', str(port), '/']),
         MAC: netifaces.ifaddresses(interface)[
-                netifaces.AF_LINK][0]['addr'].upper(),
+            netifaces.AF_LINK][0]['addr'].upper(),
         HOSTNAME: socket.gethostname(),
         MAIL: mail
     }
@@ -29,20 +34,27 @@ def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mai
 
 
 def get_int_from_mode(mode):
+    """Convert the mode string to corresponding int."""
     return MODES[mode]
 
+
 def get_mode_from_int(int_mode):
+    """Convert the mode integer to corresponding string."""
     if int_mode in INT_MODES:
         return INT_MODES[int_mode]
-    else:
-        return STATE_UNKNOWN
+    return STATE_UNKNOWN
+
 
 def get_hostname():
+    """Return connecting device hostname."""
     import socket
     return socket.gethostname()
 
+
 def get_time_from_stamp(secs_after_2k):
-    return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds = secs_after_2k)
+    """Convert ATAG report time to datetime seconds after 2000 UTC."""
+    return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=secs_after_2k)
+
 
 class HttpConnector:
     """HTTP connector to Bosch thermostat."""
@@ -69,18 +81,23 @@ class HttpConnector:
         except (client_exceptions.ClientError, TimeoutError) as err:
             raise ResponseError('Error putting data Atag: %s', err)
         except json.JSONDecodeError as jsonerr:
-            raise ResponseError('Unable to decode Json response: %s', jsonerr)
+            raise ResponseError("Unable to decode Json response: %s", jsonerr)
 
     def set_timeout(self, timeout=DEFAULT_TIMEOUT):
         """Set timeout for API calls."""
         self._request_timeout = timeout
 
+
 class HostData:
-    def __init__(self, host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
-        """Connection info store."""
+    """Connection info store."""
+
+    def __init__(self, host=None, port=DEFAULT_PORT,
+                 interface=DEFAULT_INTERFACE, mail=None):
+
         if host is None:
             raise AtagException("Invalid/None host data provided")
-        import netifaces, socket
+        import netifaces
+        import socket
         self.ataghost = host
         self.hostname = socket.gethostname()
         self.port = port
@@ -88,12 +105,14 @@ class HostData:
         self.interface = interface
         self.email = mail
         self.mac = netifaces.ifaddresses(interface)[
-                     netifaces.AF_LINK][0]['addr'].upper()
+            netifaces.AF_LINK][0]['addr'].upper()
         self.set_pair_msg()
         self.set_retrieve_msg()
 
     def set_retrieve_msg(self):
-        jsonPayload = {
+        """Get and store the constant retrieve payload."""
+
+        json_payload = {
             "retrieve_message": {
                 "seqnr": 1,
                 "account_auth": {
@@ -103,10 +122,12 @@ class HostData:
                 "info": REQUEST_INFO
             }
         }
-        self.retrieve_msg = jsonPayload
+        self.retrieve_msg = json_payload
 
     def set_pair_msg(self):
-        jsonPayload = {
+        """Get and store the constant pairing payload."""
+
+        json_payload = {
             "pair_message": {
                 "seqnr": 1,
                 "account_auth": {
@@ -125,9 +146,11 @@ class HostData:
                 }
             }
         }
-        self.pair_msg = jsonPayload
+        self.pair_msg = json_payload
 
     def get_update_msg(self, _target_mode=None, _target_temp=None):
+        """Get and return the update payload (mode and temp)."""
+
         _target_mode_int = None
         if _target_mode is None and _target_temp is None:
             raise RequestError("No update data received")
@@ -141,7 +164,7 @@ class HostData:
         elif _target_temp is not None and not isinstance(_target_temp, Number):
             raise RequestError("Not a valid temperature: %s", _target_temp)
 
-        jsonPayload = {
+        json_payload = {
             'update_message': {
                 'seqnr': 1,
                 'account_auth': {
@@ -154,4 +177,4 @@ class HostData:
                 }
             }
         }
-        return(jsonPayload)
+        return json_payload

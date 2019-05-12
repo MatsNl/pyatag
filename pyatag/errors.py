@@ -1,5 +1,9 @@
+"""Error handling for atag_Thermostat."""
+
+
 class AtagException(Exception):
     """Base error for atag_Thermostat."""
+
 
 class RequestError(AtagException):
     """
@@ -7,6 +11,7 @@ class RequestError(AtagException):
     Unable to fulfill request.
     Raised when host or API cannot be reached.
     """
+
 
 class ResponseError(AtagException):
     """Invalid response."""
@@ -18,4 +23,3 @@ class Response404Error(AtagException):
 
 class SensorNoLongerAvailable(AtagException):
     """Invalid response."""
-
