@@ -39,7 +39,7 @@ def get_mode_from_int(int_mode):
 def get_hostname():
     import socket
     return socket.gethostname()
-    
+
 def get_time_from_stamp(secs_after_2k):
     return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds = secs_after_2k)
 
@@ -50,11 +50,11 @@ class HttpConnector:
         """Init of HTTP connector."""
         self.hostdata = hostdata
         self._websession = websession
-        self._request_timeout = DEFAULT_TIMEOUT 
-       
+        self._request_timeout = DEFAULT_TIMEOUT
+
     async def atag_put(self, data, path):
         """Make a put request to the API."""
-        
+
         posturl = ''.join([str(self.hostdata.baseurl), str(path)])
         try:
             async with self._websession.put(
@@ -125,7 +125,7 @@ class HostData:
             }
         }
         self.pair_msg = jsonPayload
-    
+
     def get_update_msg(self, _target_mode=None, _target_temp=None):
         _target_mode_int = None
         if _target_mode is None and _target_temp is None:
@@ -139,7 +139,7 @@ class HostData:
                 raise RequestError("Invalid update mode: %s", _target_mode)
         elif _target_temp is not None and not isinstance(_target_temp, Number):
             raise RequestError("Not a valid temperature: %s", _target_temp)
-        
+
         jsonPayload = {
             'update_message': {
                 'seqnr': 1,
