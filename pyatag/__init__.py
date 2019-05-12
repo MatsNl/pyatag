@@ -1,7 +1,6 @@
 from pyatag.const import *
 from pyatag.helpers import *
 from pyatag.errors import *
-from pyatag.helpers import *
 
 import json
 import asyncio 
@@ -9,7 +8,7 @@ import aiohttp
 from datetime import timedelta
 
 from pyatag.gateway import atagDataStore
-
+"""
 from pyatag.input import TESTDATA #put real data
 
 async def main():
@@ -28,3 +27,5 @@ async def main():
         return atag
 
 asyncio.get_event_loop().run_until_complete(main())
+
+"""
