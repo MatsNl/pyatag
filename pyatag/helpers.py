@@ -16,7 +16,8 @@ URL = 'url'
 def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
     if host is None:
         raise AtagException("Invalid/None host data provided")
-    import netifaces, socket
+    import netifaces
+    import socket
     data = {
         URL: ''.join(['http://', str(host), ':', str(port),'/']),
         MAC: netifaces.ifaddresses(interface)[
