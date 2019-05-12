@@ -3,6 +3,7 @@ ATAG_HANDLE = 'atag_handle'
 DATA_LISTENER = 'listener'
 REQUEST_INFO = 64 + 8 + 1
 SIGNAL_UPDATE_ATAG = 'atag_update'
+CONF_INTERFACE= 'interface'
 
 STATE_HEAT = 'heat'
 STATE_ECO = 'eco'
@@ -13,6 +14,13 @@ ATTR_OPERATION_MODE = 'operation_mode'
 DEFAULT_TIMEOUT = 15
 DEFAULT_PORT = 10000
 DEFAULT_SCAN_INTERVAL = 120
+DEFAULT_INTERFACE = 'eth0'
+DEFAULT_SENSORS = {
+    'current_temp',
+    'temperature',
+    'boiler_status',
+    'flame_level'
+}
 HTTP_HEADER = {
     'Content-type': 'applicaton/x-www-form-urlencoded;charset=UTF-8',
     'Connection': 'Close',

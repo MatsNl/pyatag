@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 class atagDataStore:
 
     def __init__(
-            self, host, port, mail, interface, scan_interval, session, sensors):
+            self, session=None, host=None, port=DEFAULT_PORT, mail=None, interface=DEFAULT_INTERFACE, scan_interval=DEFAULT_SCAN_INTERVAL, sensors=DEFAULT_SENSORS):
         
         self.host_data = HostData(host=host, port=port, interface=interface, mail=mail)
         if session is None:

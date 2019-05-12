@@ -10,7 +10,7 @@ from datetime import timedelta
 
 from pyatag.gateway import atagDataStore
 
-from pyatag.fakeinput import TESTDATA #put real data
+from pyatag.input import TESTDATA #put real data
 
 async def main():
 
@@ -27,4 +27,4 @@ async def main():
         print(await atag.async_set_atag(_target_mode="manual",_target_temp=13))
         return atag
 
-#asyncio.get_event_loop().run_until_complete(main())
+asyncio.get_event_loop().run_until_complete(main())

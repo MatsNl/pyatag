@@ -4,7 +4,7 @@ from asyncio import TimeoutError
 from numbers import Number
 import json
 
-from pyatag.const import REQUEST_INFO, MODES, INT_MODES, HTTP_HEADER, DEFAULT_TIMEOUT
+from pyatag.const import REQUEST_INFO, MODES, INT_MODES, HTTP_HEADER, DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT
 from pyatag.errors import AtagException, RequestError, ResponseError, Response404Error
 
 MAC = 'mac'
@@ -13,7 +13,7 @@ MAIL = 'email'
 STATE_UNKNOWN = 'unknown'
 URL = 'url'
 
-def get_host_data(host=None, port=10000, interface='eth0', mail=None):
+def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
     if host is None:
         raise AtagException("Invalid/None host data provided")
     import netifaces, socket
@@ -66,26 +66,16 @@ class HttpConnector:
                 json_result = json.loads(data)
                 return json_result
         except (client_exceptions.ClientError, TimeoutError) as err:
-            #_LOGGER.debug(err)
-            raise RequestError(
-                'Error putting data to {}, message: {}'.
-                format(posturl, data) )
+            raise ResponseError('Error putting data Atag: %s', err)
         except json.JSONDecodeError as jsonerr:
-            raise ResponseError("Unable to decode Json response : {}".
-                                format(jsonerr))
-
-#    def _format_url(url, path):
-#        """Format URL to make requests to gateway."""
-#        res = ''.join([str(url), str(path)])
-#
-#        return res
+            raise ResponseError('Unable to decode Json response: %s', jsonerr)
 
     def set_timeout(self, timeout=DEFAULT_TIMEOUT):
         """Set timeout for API calls."""
         self._request_timeout = timeout
 
 class HostData:
-    def __init__(self, host=None, port=10000, interface='eth0', mail=None):
+    def __init__(self, host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
         """Connection info store."""
         if host is None:
             raise AtagException("Invalid/None host data provided")
