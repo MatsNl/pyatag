@@ -1,8 +1,5 @@
-#from homeassistant.components.climate.const import (STATE_HEAT, STATE_ECO, STATE_AUTO, STATE_MANUAL, ATTR_OPERATION_MODE)
-
 DOMAIN = 'atag'
 ATAG_HANDLE = 'atag_handle'
-DEVICE = 'RaspberryPI'
 DATA_LISTENER = 'listener'
 REQUEST_INFO = 64 + 8 + 1
 SIGNAL_UPDATE_ATAG = 'atag_update'
@@ -21,7 +18,6 @@ HTTP_HEADER = {
     'Connection': 'Close',
     'User-Agent': 'Mozilla/5.0 (compatible; AtagOneAPI/x; http://atag.one/)'
 }
-
 SENSOR_TYPES = {
     'current_temp': ['Room Temp', '°C', 'mdi:thermometer','room_temp'],
     'outside_temp': ['Outside Temp', '°C', 'mdi:thermometer','outside_temp'],
@@ -58,9 +54,9 @@ INT_MODES = {v: k for k, v in MODES.items()}
 
 UPDATE_MODE = 'update_mode'
 UPDATE_TEMP = 'update_temp'
-PAIR_PATH = '/pair'
-UPDATE_PATH = '/update'
-RETRIEVE_PATH = '/retrieve'
+PAIR_PATH = 'pair'
+UPDATE_PATH = 'update'
+RETRIEVE_PATH = 'retrieve'
 UPDATE_REPLY = 'update_reply'
 RETRIEVE_REPLY = 'retrieve_reply'
 PAIR_REPLY = 'pair_reply'
@@ -77,22 +73,19 @@ SENSOR_PREFIX = 'Atag '
 ATTR_REPORT_TIME = 'report_time'
 ATTR_OPERATION_MODE_INT = 'ch_mode'
 
-#ATTR_AWAY_MODE = 'away_mode'
-ATTR_CURRENT_HUMIDITY = 'current_humidity'
-ATTR_CURRENT_TEMPERATURE = 'current_temp'
-#ATTR_FAN_LIST = 'fan_list'
-#ATTR_FAN_MODE = 'fan_mode'
-#ATTR_HOLD_MODE = 'hold_mode'
-ATTR_HUMIDITY = 'humidity'
-ATTR_MAX_HUMIDITY = 'max_humidity'
+#ATTR_CURRENT_HUMIDITY = 'current_humidity'
+#ATTR_CURRENT_TEMPERATURE = 'current_temp'
+
+#ATTR_HUMIDITY = 'humidity'
+#ATTR_MAX_HUMIDITY = 'max_humidity'
 ATTR_MAX_TEMP = 'max_temp'
-ATTR_MIN_HUMIDITY = 'min_humidity'
+#ATTR_MIN_HUMIDITY = 'min_humidity'
 ATTR_MIN_TEMP = 'min_temp'
 ATTR_OPERATION_LIST = 'operation_list'
 ATTR_OPERATION_MODE = 'operation_mode'
 ATTR_OPERATION_MODE_INT = 'ch_mode'
 ATTR_TEMPERATURE_SET = 'shown_set_temp'
 ATTR_TEMPERATURE = 'temperature'
-ATTR_TARGET_TEMP_HIGH = 'target_temp_high'
-ATTR_TARGET_TEMP_LOW = 'target_temp_low'
-ATTR_TARGET_TEMP_STEP = 'target_temp_step'
+#ATTR_TARGET_TEMP_HIGH = 'target_temp_high'
+#ATTR_TARGET_TEMP_LOW = 'target_temp_low'
+#ATTR_TARGET_TEMP_STEP = 'target_temp_step'

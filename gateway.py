@@ -1,26 +1,32 @@
 """Gateway connecting to ATAG thermostat."""
-from .const import *
-from .helpers import *
-from .errors import RequestError, ResponseError
+from pyatag.const import *
+from pyatag.helpers import *
+from pyatag.errors import RequestError, ResponseError
 
 import json
-import asyncio
+import asyncio, aiohttp
 import logging
 
-_LOGGER = logging.getLogger(__name__)
+#_LOGGER = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+_LOGGER = logging.getLogger('pyatag')
 
 class atagDataStore:
 
     def __init__(
-            self, host, port, scan_interval, session, sensors):
+            self, host, port, mail, interface, scan_interval, session, sensors):
+        
+        self.host_data = HostData(host=host, port=port, interface=interface, mail=mail)
+        if session is None:
+            session = aiohttp.ClientSession()
         if type(session).__name__ == 'ClientSession':
-            self._connector = HttpConnector(host, port, session)
+            self._connector = HttpConnector(self.host_data, session)
         else:
             _LOGGER.error("Not a valid session: %s", type(session).__name__ )
 
         self.scan_interval = scan_interval
-        self._host_data = get_host_data()
-        self.retrieve_msg = set_retrieve_msg(self._host_data)
+        _LOGGER.debug(self.host_data)
+#        self.retrieve_msg = set_retrieve_msg(self.host_data)
         self.data = {}
         self.sensors = sensors
         self.sensordata = {}
@@ -30,17 +36,17 @@ class atagDataStore:
     async def async_update(self):
         """Read data from thermostat."""
         try:
-            self.data = await self._connector.atag_put(data=self.retrieve_msg, path=RETRIEVE_PATH)
+            self.data = await self._connector.atag_put(data=self.host_data.retrieve_msg, path=RETRIEVE_PATH)
             #_LOGGER.debug("Retrieve reply: %s", self.data)
-            self.sensordata = self.get_storable_data()
+            self.sensordata = self.store_sensor_data()
             _LOGGER.debug("Atag sensordata updated:\n %s", self.sensordata)
         except json.JSONDecodeError as err:
             raise ResponseError("Unable to decode Json response : {}".
                                 format(err))
 
     async def async_set_atag(self, _target_mode=None, _target_temp=None):
-        jsonPayload = get_update_msg(self._host_data, _target_mode, _target_temp)
-        _LOGGER.debug("Updating Mode: [%s], Temp:[%s]", _target_mode, _target_temp)
+        jsonPayload = self.host_data.get_update_msg(_target_mode, _target_temp)
+        _LOGGER.debug("Updating: Mode:[%s], Temp:[%s]", _target_mode, _target_temp)
         try:
             json_data = await self._connector.atag_put(data=jsonPayload, path=UPDATE_PATH)
             _LOGGER.debug("Update reply: %s", json_data)
@@ -49,10 +55,11 @@ class atagDataStore:
             raise ResponseError("Unable to decode Json response : {}".
                                 format(err))
 
-    def get_storable_data(self):
+    def store_sensor_data(self):
         result = {}
         try:
             status = self.data[RETRIEVE_REPLY][REPORT]
+            _LOGGER.debug("status: %s", status)
             for sensor in self.sensors:
                 datafield = SENSOR_TYPES[sensor][3]
                 if sensor == BOILER_STATUS:
@@ -76,13 +83,12 @@ class atagDataStore:
     async def async_check_pair_status(self):
         if self._paired:
             return True
-
-        jsonPayload = get_pair_msg(self._host_data)
         try:
-            json_data = await self._connector.atag_put(data=jsonPayload, path=PAIR_PATH)
+            json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
             status = json_data[PAIR_REPLY][ACC_STATUS]
+            _LOGGER.debug("AtagDataStore pairing\n%s\n%s",self.host_data.pair_msg,json_data)
         except:
-            _LOGGER.error("Pairing failed")
+            _LOGGER.error("Pairing failed\n%s\n%s",self.host_data.pair_msg, self.host_data.baseurl)
             return False
         if status == 2:
             self._paired = True
