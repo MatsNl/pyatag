@@ -1,12 +1,15 @@
 """Gateway connecting to ATAG thermostat."""
 import json
 import logging
-import asyncio
+#import asyncio
 import aiohttp
 
-from pyatag.const import *
-from pyatag.helpers import *
-from pyatag.errors import ResponseError
+from .const import (DEFAULT_SENSOR_SET, RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
+                    UPDATE_REPLY, RETRIEVE_REPLY, DETAILS, ACC_STATUS, REPORT, SENSOR_TYPES,
+                    BOILER_STATUS, BOILER_STATES, CONTROL, INT_MODES, ATTR_OPERATION_MODE,
+                    ATTR_OPERATION_MODE_INT, ATTR_REPORT_TIME)
+from .helpers import HostData, HttpConnector, get_time_from_stamp
+from .errors import ResponseError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,9 +18,8 @@ class AtagDataStore:
     """Central data store entity."""
 
     def __init__(
-            self, session=None, host=None, port=DEFAULT_PORT,
-            mail=None, interface=DEFAULT_INTERFACE, scan_interval=DEFAULT_SCAN_INTERVAL,
-            sensors=DEFAULT_SENSOR_SET):
+            self, session=None, host=None, port=None,
+            mail=None, interface=None, sensors=None):
 
         self.host_data = HostData(
             host=host, port=port, interface=interface, mail=mail)
@@ -28,9 +30,11 @@ class AtagDataStore:
         else:
             _LOGGER.error("Not a valid session: %s", type(session).__name__)
 
-        self.scan_interval = scan_interval
         self.data = {}
-        self.sensors = sensors
+        if sensors is None:
+            self.sensors = DEFAULT_SENSOR_SET
+        else:
+            self.sensors = sensors
         self.sensordata = {}
         self.paired = False
 
@@ -114,3 +118,7 @@ class AtagDataStore:
         _LOGGER.warning("Atag not paired!\n%s", json_data)
         self.paired = False
         return self.paired
+
+    async def async_close(self):
+        """Close the connection"""
+        await self._connector.async_close()

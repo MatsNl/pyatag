@@ -87,8 +87,6 @@ DEFAULT_MIN_TEMP = 12
 DEFAULT_MAX_TEMP = 21
 
 SENSOR_PREFIX = 'Atag '
-ATTR_REPORT_TIME = 'report_time'
-ATTR_OPERATION_MODE_INT = 'ch_mode'
 
 # ATTR_CURRENT_HUMIDITY = 'current_humidity'
 ATTR_CURRENT_TEMPERATURE = 'current_temp'
@@ -103,6 +101,7 @@ ATTR_OPERATION_MODE = 'operation_mode'
 ATTR_OPERATION_MODE_INT = 'ch_mode'
 ATTR_TEMPERATURE_SET = 'shown_set_temp'
 ATTR_TEMPERATURE = 'temperature'
+ATTR_REPORT_TIME = 'report_time'
 # ATTR_TARGET_TEMP_HIGH = 'target_temp_high'
 # ATTR_TARGET_TEMP_LOW = 'target_temp_low'
 # ATTR_TARGET_TEMP_STEP = 'target_temp_step'

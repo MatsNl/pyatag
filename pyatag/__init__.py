@@ -1,14 +1,12 @@
-"""
-initfile for ATAG api
+#-*- coding:utf-8 -*-
 
-from pyatag.const import *
-from pyatag.helpers import *
-from pyatag.errors import *
+'''
+Provides connection to ATAG One Thermostat REST API
 
-import json
-import asyncio
-import aiohttp
-from datetime import timedelta
+#__version__ = '0.1.5'
+__all__ = ["pytag"]
 
-from pyatag.gateway import atagDataStore
-"""
+from pytag.gateway import AtagDataStore
+'''
+
+#from pyatag.gateway import AtagDataStore

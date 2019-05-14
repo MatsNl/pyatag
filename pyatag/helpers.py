@@ -1,7 +1,6 @@
 """Helpers for the ATAG connection"""
 
 from datetime import datetime, timezone, timedelta
-from asyncio import TimeoutError
 from numbers import Number
 import json
 
@@ -16,18 +15,17 @@ MAIL = 'email'
 STATE_UNKNOWN = 'unknown'
 URL = 'url'
 
-
 def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
     """Store connection information in dict."""
     if host is None:
         raise AtagException("Invalid/None host data provided")
     import netifaces
-    import socket
+    from socket import gethostname
     data = {
-        URL: ''.join(['http://', str(host), ':', str(port), '/']),
+        URL: "http://{}:{}/".format(host, port),
         MAC: netifaces.ifaddresses(interface)[
             netifaces.AF_LINK][0]['addr'].upper(),
-        HOSTNAME: socket.gethostname(),
+        HOSTNAME: gethostname(),
         MAIL: mail
     }
     return data
@@ -43,13 +41,6 @@ def get_mode_from_int(int_mode):
     if int_mode in INT_MODES:
         return INT_MODES[int_mode]
     return STATE_UNKNOWN
-
-
-def get_hostname():
-    """Return connecting device hostname."""
-    import socket
-    return socket.gethostname()
-
 
 def get_time_from_stamp(secs_after_2k):
     """Convert ATAG report time to datetime seconds after 2000 UTC."""
@@ -79,13 +70,19 @@ class HttpConnector:
                 json_result = json.loads(data)
                 return json_result
         except (client_exceptions.ClientError, TimeoutError) as err:
-            raise ResponseError('Error putting data Atag: %s', err)
-        except json.JSONDecodeError as jsonerr:
-            raise ResponseError("Unable to decode Json response: %s", jsonerr)
+            raise ResponseError("Error putting data Atag: {}".format(err))
+        except json.JSONDecodeError as err:
+            raise ResponseError(
+                "Unable to decode Json response: {}".format(err))
 
     def set_timeout(self, timeout=DEFAULT_TIMEOUT):
         """Set timeout for API calls."""
         self._request_timeout = timeout
+
+    async def async_close(self):
+        """Close the connection"""
+        await self._websession.close()
+
 
 
 class HostData:
@@ -96,6 +93,8 @@ class HostData:
 
         if host is None:
             raise AtagException("Invalid/None host data provided")
+        if interface is None:
+            interface = DEFAULT_INTERFACE
         import netifaces
         import socket
         self.ataghost = host
@@ -160,9 +159,11 @@ class HostData:
             if _target_mode in MODES:
                 _target_mode_int = MODES[_target_mode]
             else:
-                raise RequestError("Invalid update mode: %s", _target_mode)
+                raise RequestError(
+                    "Invalid update mode: {}".format(_target_mode))
         elif _target_temp is not None and not isinstance(_target_temp, Number):
-            raise RequestError("Not a valid temperature: %s", _target_temp)
+            raise RequestError(
+                "Not a valid temperature: {}".format(_target_temp))
 
         json_payload = {
             'update_message': {
