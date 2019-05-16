@@ -6,7 +6,7 @@ setup(
     packages=['pyatag'],   # Chose the same as "name"
     version='0.1.5',      # Start with a small number
     license='MIT',
-    description='Python API to connect ATAG One Thermostat',
+    description='Connection to ATAG One Thermostat REST Api',
     author='Mats',                   # Type in your name
     author_email='mats.nelissen@gmail.com',      # Type in your E-Mail
     url='https://github.com/MatsNl/pyatag',

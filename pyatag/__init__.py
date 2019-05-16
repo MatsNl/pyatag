@@ -8,5 +8,7 @@ __all__ = ["pytag"]
 
 from pytag.gateway import AtagDataStore
 '''
+import asyncio
+import pyatag.test
 
-#from pyatag.gateway import AtagDataStore
+asyncio.get_event_loop().run_until_complete(pyatag.test.test())

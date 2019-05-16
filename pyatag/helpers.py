@@ -84,7 +84,6 @@ class HttpConnector:
         await self._websession.close()
 
 
-
 class HostData:
     """Connection info store."""
 
@@ -92,7 +91,8 @@ class HostData:
                  interface=DEFAULT_INTERFACE, mail=None):
 
         if host is None:
-            raise AtagException("Invalid/None host data provided")
+            raise RequestError("Invalid/None host data provided")
+        print(interface)
         if interface is None:
             interface = DEFAULT_INTERFACE
         import netifaces
@@ -153,8 +153,6 @@ class HostData:
         _target_mode_int = None
         if _target_mode is None and _target_temp is None:
             raise RequestError("No update data received")
-#            elif _target_mode is not None and _target_temp is not None:
-#                raise RequestError("Cannot update mode and temperature simultaneously")
         elif _target_mode is not None:
             if _target_mode in MODES:
                 _target_mode_int = MODES[_target_mode]
