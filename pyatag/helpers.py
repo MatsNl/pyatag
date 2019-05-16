@@ -69,7 +69,7 @@ class HttpConnector:
                 data = await req.text()
                 json_result = json.loads(data)
                 return json_result
-        except (client_exceptions.ClientError, TimeoutError) as err:
+        except (client_exceptions.ClientError, client_exceptions.ClientConnectorError, TimeoutError) as err:
             raise ResponseError("Error putting data Atag: {}".format(err))
         except json.JSONDecodeError as err:
             raise ResponseError(
