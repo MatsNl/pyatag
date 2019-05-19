@@ -2,3 +2,4 @@ input.py
 __pycache__
 update
 .vscode/launch.json
+.DS_Store

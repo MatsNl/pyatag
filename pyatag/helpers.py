@@ -5,8 +5,8 @@ from numbers import Number
 import json
 
 from aiohttp import client_exceptions
-from pyatag.errors import AtagException, RequestError, ResponseError  # , Response404Error
-from pyatag.const import (REQUEST_INFO, MODES, INT_MODES, HTTP_HEADER,
+from .errors import AtagException, RequestError, ResponseError  # , Response404Error
+from .const import (REQUEST_INFO, MODES, INT_MODES, HTTP_HEADER,
                           DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT)
 
 MAC = 'mac'
