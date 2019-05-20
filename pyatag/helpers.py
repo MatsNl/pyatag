@@ -92,7 +92,6 @@ class HostData:
 
         if host is None:
             raise RequestError("Invalid/None host data provided")
-        print(interface)
         if interface is None:
             interface = DEFAULT_INTERFACE
         import netifaces
@@ -103,8 +102,11 @@ class HostData:
         self.baseurl = ''.join(['http://', str(host), ':', str(port), '/'])
         self.interface = interface
         self.email = mail
-        self.mac = netifaces.ifaddresses(interface)[
-            netifaces.AF_LINK][0]['addr'].upper()
+        try:
+            self.mac = netifaces.ifaddresses(interface)[
+                netifaces.AF_LINK][0]['addr'].upper()
+        except ValueError:
+            raise RequestError("Incorrect interface selected")
         self.set_pair_msg()
         self.set_retrieve_msg()
 

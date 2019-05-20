@@ -7,7 +7,7 @@ from .const import (DEFAULT_SENSOR_SET, RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, P
                     BOILER_STATUS, BOILER_STATES, CONTROL, INT_MODES, ATTR_OPERATION_MODE,
                     ATTR_OPERATION_MODE_INT, ATTR_REPORT_TIME)
 from .helpers import HostData, HttpConnector, get_time_from_stamp
-from .errors import ResponseError
+from .errors import ResponseError, RequestError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,9 +18,11 @@ class AtagDataStore:
     def __init__(
             self, session=None, host=None, port=None,
             mail=None, interface=None, sensors=None):
-
-        self.host_data = HostData(
-            host=host, port=port, interface=interface, mail=mail)
+        try:
+            self.host_data = HostData(
+                host=host, port=port, interface=interface, mail=mail)
+        except RequestError:
+            _LOGGER.error("Incorrect host data provided, check config!")
         if session is None:
             session = aiohttp.ClientSession()
         if type(session).__name__ == 'ClientSession':
@@ -40,11 +42,8 @@ class AtagDataStore:
         """Read data from thermostat."""
         if not self.paired:
             _LOGGER.debug("Atag not paired yet - attempting..")
-            try:
-                await self.async_check_pair_status()
-                _LOGGER.debug("Pairing succeeded")
-            except ResponseError as err:
-                _LOGGER.error("Pairing failed:\n%s", err)
+            if not await self.async_check_pair_status():
+                _LOGGER.error("Pairing failed - please confirm pairing on device")
                 return
         try:
             json_data = await self._connector.atag_put(
@@ -99,7 +98,7 @@ class AtagDataStore:
     async def async_check_pair_status(self):
         """Confirm we are authorized."""
         if self.paired:
-            return
+            return True
         try:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
             status = json_data[PAIR_REPLY][ACC_STATUS]
@@ -108,18 +107,19 @@ class AtagDataStore:
         except ResponseError as err:
             _LOGGER.error("Pairing failed\n%s\n%s",
                           self.host_data.pair_msg, err)
-            return
+            return False
         if status == 2:
             self.paired = True
             _LOGGER.debug("AtagDataStore paired")
-            return
-        elif status == 1:
-            print("Waiting for pairing confirmation")
+            return True
+        if status == 1:
+            _LOGGER.warning("Waiting for pairing confirmation")
         elif status == 3:
-            print("Waiting for pairing confirmation")
+            _LOGGER.warning("Waiting for pairing confirmation")
         elif status == 0:
-            print("No status returned from ATAG One")
+            _LOGGER.warning("No status returned from ATAG One")
         _LOGGER.warning("Atag not paired!\n%s", json_data)
+        return False
 
     async def async_close(self):
         """Close the connection"""

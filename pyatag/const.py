@@ -85,7 +85,8 @@ BOILER_STATES = {
     0: 'Idle'
 }
 
-MODES = {STATE_MANUAL: 1, STATE_AUTO: 2}
+# fix for Google Assistant integration - use HEAT instead of MANUAL
+MODES = {STATE_HEAT: 1, STATE_AUTO: 2}
 INT_MODES = {v: k for k, v in MODES.items()}
 
 UPDATE_MODE = 'update_mode'
