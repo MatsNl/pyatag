@@ -14,8 +14,7 @@ async def test():
     """Test connection with imported TESTDATA dict"""
     from pyatag.gateway import AtagDataStore
     import aiohttp
-    from pyatag.input import TESTDATA
-    print (TESTDATA)
+    from .input import TESTDATA
     async with aiohttp.ClientSession() as session:
         atag = AtagDataStore(host=TESTDATA["_host"],
                              port=TESTDATA["_port"],
