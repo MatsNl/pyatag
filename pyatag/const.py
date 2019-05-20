@@ -1,8 +1,8 @@
 """Constants for ATAG API."""
 
 DOMAIN = 'atag'
-ATAG_HANDLE = 'atag_handle'
-DATA_LISTENER = 'listener'
+ATAG_HANDLE = 'atag_data'
+DATA_LISTENER = 'atag_listener'
 REQUEST_INFO = 64 + 8 + 1
 SIGNAL_UPDATE_ATAG = 'atag_update'
 CONF_INTERFACE = 'interface'
@@ -49,19 +49,19 @@ ATTR_REPORT_TIME = 'report_time'
 BOILER_STATUS = 'boiler_status'
 
 SENSOR_TYPES = {
-    ATTR_CURRENT_TEMPERATURE: ['Room Temp', '°C', 'mdi:thermometer', 'room_temp'],
+    ATTR_CURRENT_TEMPERATURE: ['Current Temperature', '°C', 'mdi:thermometer', 'room_temp'],
     'outside_temp': ['Outside Temp', '°C', 'mdi:thermometer', 'outside_temp'],
-    'outside_temp_avg': ['Average Outside Temp', '°C', 'mdi:thermometer',
+    'outside_temp_avg': ['Average Outside Temperature', '°C', 'mdi:thermometer',
                          'tout_avg'],
-    'pcb_temp': ['PCB Temp', '°C', 'mdi:thermometer', 'pcb_temp'],
-    ATTR_TEMPERATURE: ['Target Temp', '°C', 'mdi:thermometer', ATTR_TEMPERATURE_SET],
+    'pcb_temp': ['PCB Temperature', '°C', 'mdi:thermometer', 'pcb_temp'],
+    ATTR_TEMPERATURE: ['Target Temperature', '°C', 'mdi:thermometer', ATTR_TEMPERATURE_SET],
     'ch_water_pressure': ['Central Heating Pressure', 'Bar', 'mdi:gauge',
                           'ch_water_pres'],
-    'ch_water_temp': ['Central Heating Water Temp', '°C', 'mdi:thermometer',
+    'ch_water_temp': ['Central Heating Water Temperature', '°C', 'mdi:thermometer',
                       'ch_water_temp'],
-    'ch_return_temp': ['Central Heating Return Temp', '°C', 'mdi:thermometer',
+    'ch_return_temp': ['Central Heating Return Temperature', '°C', 'mdi:thermometer',
                        'ch_return_temp'],
-    'dhw_water_temp': ['Hot Water Temp', '°C', 'mdi:thermometer',
+    'dhw_water_temp': ['Hot Water Temperature', '°C', 'mdi:thermometer',
                        'dhw_water_temp'],
     'dhw_water_pres': ['Hot Water Pressure', 'Bar', 'mdi:gauge',
                        'dhw_water_pres'],
