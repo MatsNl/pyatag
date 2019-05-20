@@ -7,4 +7,3 @@ pyatag\errors.py
 pyatag\fakeinput.py
 pyatag\gateway.py
 pyatag\helpers.py
-pyatag\input.py

@@ -1,6 +1,5 @@
 """Gateway connecting to ATAG thermostat."""
 import logging
-#import asyncio
 import aiohttp
 
 from .const import (DEFAULT_SENSOR_SET, RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
@@ -40,8 +39,13 @@ class AtagDataStore:
     async def async_update(self):
         """Read data from thermostat."""
         if not self.paired:
-            self.async_check_pair_status()
-            return
+            _LOGGER.debug("Atag not paired yet - attempting..")
+            try:
+                await self.async_check_pair_status()
+                _LOGGER.debug("Pairing succeeded")
+            except ResponseError as err:
+                _LOGGER.error("Pairing failed:\n%s", err)
+                return
         try:
             json_data = await self._connector.atag_put(
                 data=self.host_data.retrieve_msg, path=RETRIEVE_PATH)
@@ -99,11 +103,11 @@ class AtagDataStore:
         try:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
             status = json_data[PAIR_REPLY][ACC_STATUS]
-            _LOGGER.debug("AtagDataStore pairing\n%s\n%s",
-                          self.host_data.pair_msg, json_data)
-        except ResponseError:
+            _LOGGER.debug("AtagDataStore pairing\n%s\n%s\n%s",
+                          self.host_data.pair_msg, json_data, status)
+        except ResponseError as err:
             _LOGGER.error("Pairing failed\n%s\n%s",
-                          self.host_data.pair_msg, self.host_data.baseurl)
+                          self.host_data.pair_msg, err)
             return
         if status == 2:
             self.paired = True

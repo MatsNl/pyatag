@@ -23,9 +23,9 @@ async def test():
                              session=session,
                              sensors=TESTDATA["_sensors"])
 
-        await atag.async_check_pair_status()
         print(atag.paired)
         await atag.async_update()
+        print(atag.paired)
         #print(await atag.async_set_atag(_target_mode="manual", _target_temp=13))
 
         return atag.sensordata

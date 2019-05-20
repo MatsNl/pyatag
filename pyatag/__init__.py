@@ -13,7 +13,3 @@ import pyatag.test
 
 asyncio.get_event_loop().run_until_complete(pyatag.test.test())
 '''
-import asyncio
-from pyatag.test import test
-
-asyncio.get_event_loop().run_until_complete(test())
