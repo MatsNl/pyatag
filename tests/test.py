@@ -1,5 +1,4 @@
 #-*- coding:utf-8 -*-
-
 '''
 Provides connection to ATAG One Thermostat REST API
 
@@ -23,9 +22,9 @@ async def test():
                              session=session,
                              sensors=TESTDATA["_sensors"])
 
-        print(atag.paired)
         await atag.async_update()
-        print(atag.paired)
+        assert atag.paired
+        print(atag.sensordata)
         #print(await atag.async_set_atag(_target_mode="manual", _target_temp=13))
 
         return atag.sensordata

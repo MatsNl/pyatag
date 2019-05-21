@@ -3,10 +3,9 @@ import logging
 import aiohttp
 
 from .const import (DEFAULT_SENSOR_SET, RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
-                    UPDATE_REPLY, RETRIEVE_REPLY, DETAILS, ACC_STATUS, REPORT, SENSOR_TYPES,
-                    BOILER_STATUS, BOILER_STATES, CONTROL, INT_MODES, ATTR_OPERATION_MODE,
-                    ATTR_OPERATION_MODE_INT, ATTR_REPORT_TIME)
-from .helpers import HostData, HttpConnector, get_time_from_stamp
+                    UPDATE_REPLY, ACC_STATUS)
+
+from .helpers import HostData, HttpConnector, get_data_from_jsonreply
 from .errors import ResponseError, RequestError
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,12 +47,11 @@ class AtagDataStore:
         try:
             json_data = await self._connector.atag_put(
                 data=self.host_data.retrieve_msg, path=RETRIEVE_PATH)
+            sensordata = get_data_from_jsonreply(json_data)
+            if sensordata:
+                self.sensordata = sensordata
         except ResponseError as err:
-            _LOGGER.warning("Atag failed to update:\n %s", err)
-            return False
-        sensordata = self.store_sensor_data(json_data)
-        if sensordata:
-            self.sensordata = sensordata
+            _LOGGER.warning('Atag sensor failed to update:\n%s', err)
 
     async def async_set_atag(self, _target_mode=None, _target_temp=None):
         """set mode and/or temperature."""
@@ -70,31 +68,6 @@ class AtagDataStore:
             _LOGGER.error("Failed to set Atag: %s", err)
             return False
 
-    def store_sensor_data(self, json_response):
-        """Store relevant sensor data directly from json."""
-        result = {}
-        try:
-            status = json_response[RETRIEVE_REPLY][REPORT]
-            for sensor in self.sensors:
-                datafield = SENSOR_TYPES[sensor][3]
-                if sensor == BOILER_STATUS:
-                    worker = int(status[sensor])
-                    result[sensor] = BOILER_STATES[worker & 14]
-                elif DETAILS in status and datafield in status[DETAILS]:
-                    result[sensor] = float(status[DETAILS][datafield])
-                elif datafield in status:
-                    result[sensor] = float(status[datafield])
-                else:
-                    raise ResponseError("Atag sensor {} type error: {}".format(sensor, datafield))
-                mode_int = json_response[RETRIEVE_REPLY][CONTROL][ATTR_OPERATION_MODE_INT]
-                result[ATTR_OPERATION_MODE] = INT_MODES[mode_int]
-                result[ATTR_REPORT_TIME] = get_time_from_stamp(
-                    status[ATTR_REPORT_TIME])
-        except (ResponseError, KeyError) as err:
-            _LOGGER.error('Atag sensor failed to update: %s', err)
-            return False
-        return result
-
     async def async_check_pair_status(self):
         """Confirm we are authorized."""
         if self.paired:
@@ -102,11 +75,9 @@ class AtagDataStore:
         try:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
             status = json_data[PAIR_REPLY][ACC_STATUS]
-            _LOGGER.debug("AtagDataStore pairing\n%s\n%s\n%s",
-                          self.host_data.pair_msg, json_data, status)
         except ResponseError as err:
-            _LOGGER.error("Pairing failed\n%s\n%s",
-                          self.host_data.pair_msg, err)
+            _LOGGER.error("Pairing failed\nPairmessage: {}\nError: {}".format(
+                self.host_data.pair_msg, err))
             return False
         if status == 2:
             self.paired = True

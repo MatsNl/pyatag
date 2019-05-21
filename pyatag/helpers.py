@@ -5,18 +5,21 @@ from numbers import Number
 import json
 
 from aiohttp import client_exceptions
-from .errors import AtagException, RequestError, ResponseError  # , Response404Error
-from .const import (REQUEST_INFO, MODES, INT_MODES, HTTP_HEADER,
-                          DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT)
+from .errors import RequestError, ResponseError
+from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS,
+                    DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT, ATTR_OPERATION_MODE,
+                    ATTR_REPORT_TIME, RETRIEVE_REPLY, DETAILS, REPORT, SENSOR_TYPES,
+                    REPORT_STRUCTURE_INV, HTTP_HEADER)
 
 MAC = 'mac'
 HOSTNAME = 'hostname'
 MAIL = 'email'
-STATE_UNKNOWN = 'unknown'
+#STATE_UNKNOWN = 'unknown'
 URL = 'url'
 
+"""
 def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
-    """Store connection information in dict."""
+    Store connection information in dict.
     if host is None:
         raise AtagException("Invalid/None host data provided")
     import netifaces
@@ -29,22 +32,41 @@ def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mai
         MAIL: mail
     }
     return data
+"""
+
+def get_data_from_jsonreply(json_response):
+    """Return relevant sensor data from json retrieve reply."""
+    result = {}
+    try:
+        _reply = json_response[RETRIEVE_REPLY]
+        _reply[DETAILS] = _reply[REPORT][DETAILS]
+        for sensor in SENSOR_TYPES:
+            datafield = SENSOR_TYPES[sensor][3]
+            location = REPORT_STRUCTURE_INV[datafield] # in report, details or control?
+            if sensor in [BOILER_STATUS, ATTR_OPERATION_MODE, ATTR_REPORT_TIME]:
+                worker = int(_reply[location][datafield])
+                result[sensor] = get_state_from_worker(sensor, worker)
+            else:
+                result[sensor] = float(_reply[location][datafield])
+    except KeyError as err:
+        raise ResponseError(err)
+    return result
 
 
-def get_int_from_mode(mode):
-    """Convert the mode string to corresponding int."""
-    return MODES[mode]
-
-
-def get_mode_from_int(int_mode):
-    """Convert the mode integer to corresponding string."""
-    if int_mode in INT_MODES:
-        return INT_MODES[int_mode]
-    return STATE_UNKNOWN
-
-def get_time_from_stamp(secs_after_2k):
-    """Convert ATAG report time to datetime seconds after 2000 UTC."""
-    return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=secs_after_2k)
+def get_state_from_worker(sensor, worker):
+    """
+    Returns:\n
+    Boiler status based on binary indicator.\n
+    Operation mode based on received int.\n
+    Report time based on seconds from 2000 (UTC).
+    """
+    if sensor == BOILER_STATUS:
+        return BOILER_STATES[worker & 14]
+    if sensor == ATTR_OPERATION_MODE:
+        return INT_MODES[worker]
+    if sensor == ATTR_REPORT_TIME:
+        return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
+    return False
 
 
 class HttpConnector:
@@ -59,7 +81,7 @@ class HttpConnector:
     async def atag_put(self, data, path):
         """Make a put request to the API."""
 
-        posturl = ''.join([str(self.hostdata.baseurl), str(path)])
+        posturl = '{}{}'.format(self.hostdata.baseurl, path)
         try:
             async with self._websession.put(
                     posturl,
@@ -69,7 +91,8 @@ class HttpConnector:
                 data = await req.text()
                 json_result = json.loads(data)
                 return json_result
-        except (client_exceptions.ClientError, client_exceptions.ClientConnectorError, TimeoutError) as err:
+        except (client_exceptions.ClientError,
+                client_exceptions.ClientConnectorError, TimeoutError) as err:
             raise ResponseError("Error putting data Atag: {}".format(err))
         except json.JSONDecodeError as err:
             raise ResponseError(
@@ -96,12 +119,9 @@ class HostData:
             interface = DEFAULT_INTERFACE
         import netifaces
         import socket
-        self.ataghost = host
-        self.hostname = socket.gethostname()
-        self.port = port
-        self.baseurl = ''.join(['http://', str(host), ':', str(port), '/'])
-        self.interface = interface
         self.email = mail
+        self.hostname = socket.gethostname()
+        self.baseurl = "http://{}:{}/".format(host, port)
         try:
             self.mac = netifaces.ifaddresses(interface)[
                 netifaces.AF_LINK][0]['addr'].upper()
@@ -155,7 +175,7 @@ class HostData:
         _target_mode_int = None
         if _target_mode is None and _target_temp is None:
             raise RequestError("No update data received")
-        elif _target_mode is not None:
+        if _target_mode is not None:
             if _target_mode in MODES:
                 _target_mode_int = MODES[_target_mode]
             else:
