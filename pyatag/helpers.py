@@ -9,7 +9,7 @@ from .errors import RequestError, ResponseError
 from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS,
                     DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT, ATTR_OPERATION_MODE,
                     ATTR_REPORT_TIME, RETRIEVE_REPLY, DETAILS, REPORT, SENSOR_TYPES,
-                    REPORT_STRUCTURE_INV, HTTP_HEADER)
+                    REPORT_STRUCTURE_INV, HTTP_HEADER, WEATHER_STATUS, WEATHER_STATES)
 
 MAC = 'mac'
 HOSTNAME = 'hostname'
@@ -43,7 +43,7 @@ def get_data_from_jsonreply(json_response):
         for sensor in SENSOR_TYPES:
             datafield = SENSOR_TYPES[sensor][3]
             location = REPORT_STRUCTURE_INV[datafield] # in report, details or control?
-            if sensor in [BOILER_STATUS, ATTR_OPERATION_MODE, ATTR_REPORT_TIME]:
+            if sensor in [BOILER_STATUS, ATTR_OPERATION_MODE, ATTR_REPORT_TIME, WEATHER_STATUS]:
                 worker = int(_reply[location][datafield])
                 result[sensor] = get_state_from_worker(sensor, worker)
             else:
@@ -57,13 +57,18 @@ def get_state_from_worker(sensor, worker):
     """
     Returns:\n
     Boiler status based on binary indicator.\n
-    Operation mode based on received int.\n
+    Operation mode and Weather status from Atag int.\n
     Report time based on seconds from 2000 (UTC).
     """
     if sensor == BOILER_STATUS:
         return BOILER_STATES[worker & 14]
     if sensor == ATTR_OPERATION_MODE:
         return INT_MODES[worker]
+    if sensor == WEATHER_STATUS:
+        if worker in WEATHER_STATES:
+            return WEATHER_STATES[worker]
+        else:
+            return worker
     if sensor == ATTR_REPORT_TIME:
         return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
     return False

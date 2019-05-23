@@ -17,6 +17,7 @@ async def test():
     async with aiohttp.ClientSession() as session:
         atag = AtagDataStore(host=TESTDATA["_host"],
                              port=TESTDATA["_port"],
+                             #mail=None, # test with mail == None
                              mail=TESTDATA["_mail"],
                              interface=TESTDATA["_interface"],
                              session=session,

@@ -60,6 +60,7 @@ REPORT = 'report'
 CONTROL = 'control'
 DETAILS = 'details'
 ACC_STATUS = 'acc_status'
+WEATHER_STATUS = 'weather_status'
 
 DEFAULT_NAME = 'Atag One Thermostat'
 DEFAULT_MIN_TEMP = 12
@@ -72,7 +73,7 @@ SENSOR_TYPES = {
     'outside_temp': ['Outside Temp', '°C', 'mdi:thermometer', 'outside_temp'],
     'outside_temp_avg': ['Average Outside Temperature', '°C', 'mdi:thermometer',
                          'tout_avg'],
-    'weather_status': ['Weather Status', '', 'mdi:white-balance-sunny', 'weather_status'],
+    WEATHER_STATUS: ['Weather Status', '', 'mdi:white-balance-sunny', 'weather_status'],
     'pcb_temp': ['PCB Temperature', '°C', 'mdi:thermometer', 'pcb_temp'],
     ATTR_TEMPERATURE: ['Target Temperature', '°C', 'mdi:thermometer', ATTR_TEMPERATURE_SET],
     ATTR_OPERATION_MODE: ['Operation Mode', '', 'mdi:settings', ATTR_OPERATION_MODE_INT],
@@ -120,6 +121,23 @@ BOILER_STATES = {
     4: 'Water active',
     2: 'CV active',
     0: 'Idle'
+}
+
+WEATHER_STATES = {
+    0: 'Sunny',
+    1: 1, # TBD
+    2: 2, # TBD
+    3: 3, # TBD
+    4: 4, # TBD
+    5: 5, # TBD
+    6: 6, # TBDs
+    7: 'Cloudy',
+    8: 'Mostly Cloudy',
+    9: 'Mostly Cloudy Night',
+    10: 10,
+    11: 11,
+    12: 12,
+    13: 13
 }
 
 # fix for Google Assistant integration - use HEAT instead of MANUAL

@@ -17,6 +17,12 @@ class AtagDataStore:
     def __init__(
             self, session=None, host=None, port=None,
             mail=None, interface=None, sensors=None):
+        ## Nog klussen: automatic host discovery + device id registry (+include in requests)
+        if host is None:
+            from .discovery import discover_atag
+            host, device = discover_atag()
+            _LOGGER.warning("Found Atag at %s\nDevice id: %s", host, device)
+
         try:
             self.host_data = HostData(
                 host=host, port=port, interface=interface, mail=mail)
@@ -42,7 +48,8 @@ class AtagDataStore:
         if not self.paired:
             _LOGGER.debug("Atag not paired yet - attempting..")
             if not await self.async_check_pair_status():
-                _LOGGER.error("Pairing failed - please confirm pairing on device")
+                _LOGGER.error(
+                    "Pairing failed - please confirm pairing on device")
                 return
         try:
             json_data = await self._connector.atag_put(
@@ -63,7 +70,8 @@ class AtagDataStore:
             json_data = await self._connector.atag_put(data=json_payload, path=UPDATE_PATH)
             _LOGGER.debug("Update reply: %s", json_data)
             if not json_data[UPDATE_REPLY][ACC_STATUS] == 2:
-                raise ResponseError("Invalid update reply received: {}".format(json_data))
+                raise ResponseError(
+                    "Invalid update reply received: {}".format(json_data))
         except (ResponseError, KeyError) as err:
             _LOGGER.error("Failed to set Atag: %s", err)
             return False
@@ -76,8 +84,7 @@ class AtagDataStore:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
             status = json_data[PAIR_REPLY][ACC_STATUS]
         except ResponseError as err:
-            _LOGGER.error("Pairing failed\nPairmessage: {}\nError: {}".format(
-                self.host_data.pair_msg, err))
+            _LOGGER.error("Pairing failed\nPairmsg: %s\nError: %s", self.host_data.pair_msg, err)
             return False
         if status == 2:
             self.paired = True
