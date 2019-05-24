@@ -1,7 +1,7 @@
 """Gateway connecting to ATAG thermostat."""
 import logging
-import aiohttp
 import asyncio
+import aiohttp
 
 from .const import (RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
                     UPDATE_REPLY, ACC_STATUS)
@@ -10,6 +10,12 @@ from .helpers import HostData, HttpConnector, get_data_from_jsonreply
 from .errors import ResponseError, RequestError
 
 _LOGGER = logging.getLogger(__name__)
+SESSION = 'session'
+HOST = 'host'
+PORT = 'port'
+MAIL = 'mail'
+INTERFACE = 'interface'
+DEVICE = 'device'
 
 
 class AtagDataStore:
@@ -21,33 +27,57 @@ class AtagDataStore:
 
         self.initialized = False
         self.paired = False
+        self.session = session
+        # TODO: overlap met HostData eruit slopen // simpeler maken // self.session ?
+        self.host_config = {
+            HOST: host,
+            PORT: port,
+            MAIL: mail,
+            INTERFACE: interface,
+            DEVICE: None
+        }
+        print(self.host_config)
+        self.host_data = None
         self.sensordata = {}
-        asyncio.create_task(self.async_initialization(session, host, port, mail, interface))
-        # Nog klussen: automatic host discovery + device id registry (+include in requests)
+        if self.host_config[HOST] is not None:
+            self.finalize_init()
 
-    async def async_initialization(self, session=None, host=None, port=None, interface=None, mail=None):
-        """Datastore initialization has to be awaited in case host is unknown."""
-        if host is None:
-            from .discovery import discover_atag
-            try:
-                _LOGGER.debug(
-                    "No host data provided, attempting UDP discovery...")
-                host, device = await discover_atag()
-            except:
-                raise RequestError("Atag host discovery failed")
-            _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)
+        # TODO: fix dat dit niet 2x runt, blokkeert poort
+        # else:
+        #    print('No host, initiating discovery...')
+        #    asyncio.create_task(self.async_find_atag())
+
+    def finalize_init(self):
+        """Final init steps after host is known."""
         try:
-            self.host_data = HostData(
-                host=host, port=port, interface=interface, mail=mail)
+            self.host_data = HostData(self.host_config)
         except RequestError:
-            _LOGGER.error("Incorrect host data provided, check config!")
-        if session is None:
-            session = aiohttp.ClientSession()
-        if type(session).__name__ == 'ClientSession':
-            self._connector = HttpConnector(self.host_data, session)
+            _LOGGER.error(
+                "Initialization failed: Incorrect host data provided!")
+        if self.session is None:
+            self.session = aiohttp.ClientSession()
+        if type(self.session).__name__ == 'ClientSession':
+            self._connector = HttpConnector(self.host_data, self.session)
         else:
-            _LOGGER.error("Not a valid session: %s", type(session).__name__)   
+            _LOGGER.error("Not a valid session: %s",
+                          type(self.session).__name__)
         self.initialized = True
+        print(self.initialized)
+
+    async def async_find_atag(self):
+        """Atag Discovery in case no host provided."""
+        from .discovery import discover_atag
+        try:
+            _LOGGER.debug(
+                "No host data provided, attempting UDP discovery...")
+            host, device = await discover_atag()
+            self.host_config[HOST] = host
+            self.host_config[DEVICE] = device
+            print(host)
+        except:
+            raise RequestError("Atag host discovery failed")
+        _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)
+        self.finalize_init()
 
     async def async_update(self):
         """Read data from thermostat."""
@@ -88,7 +118,9 @@ class AtagDataStore:
         if self.paired:
             return True
         if not self.initialized:
-            await self.async_initialization() # make that it doesnt need the input fields
+            await self.async_find_atag()
+            if not self.initialized:
+                return False
         try:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
             status = json_data[PAIR_REPLY][ACC_STATUS]

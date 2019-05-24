@@ -6,7 +6,7 @@ import json
 
 from aiohttp import client_exceptions
 from .errors import RequestError, ResponseError
-from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS,
+from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS, BOILER_CONF,
                     DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT, ATTR_OPERATION_MODE,
                     ATTR_REPORT_TIME, RETRIEVE_REPLY, DETAILS, REPORT, SENSOR_TYPES,
                     REPORT_STRUCTURE_INV, HTTP_HEADER, WEATHER_STATUS, WEATHER_STATES)
@@ -16,6 +16,7 @@ HOSTNAME = 'hostname'
 MAIL = 'email'
 URL = 'url'
 
+
 def get_data_from_jsonreply(json_response):
     """Return relevant sensor data from json retrieve reply."""
     result = {}
@@ -24,8 +25,9 @@ def get_data_from_jsonreply(json_response):
         _reply[DETAILS] = _reply[REPORT][DETAILS]
         for sensor in SENSOR_TYPES:
             datafield = SENSOR_TYPES[sensor][3]
-            location = REPORT_STRUCTURE_INV[datafield] # in report, details or control?
-            if sensor in [BOILER_STATUS, ATTR_OPERATION_MODE, ATTR_REPORT_TIME, WEATHER_STATUS]:
+            location = REPORT_STRUCTURE_INV[datafield]
+            if sensor in [BOILER_STATUS, BOILER_CONF, ATTR_OPERATION_MODE,
+                          ATTR_REPORT_TIME, WEATHER_STATUS]:
                 worker = int(_reply[location][datafield])
                 result[sensor] = get_state_from_worker(sensor, worker)
             else:
@@ -47,12 +49,17 @@ def get_state_from_worker(sensor, worker):
     if sensor == ATTR_OPERATION_MODE:
         return INT_MODES[worker]
     if sensor == WEATHER_STATUS:
-        if worker in WEATHER_STATES:
-            return [WEATHER_STATES[worker], worker, '{0:b}'.format(worker)]
-        return [worker, '{0:b}'.format(worker)]
+        return WEATHER_STATES[worker]
+    if sensor == BOILER_CONF:
+        return [worker, int_to_binary(worker)]
     if sensor == ATTR_REPORT_TIME:
         return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
     return False
+
+
+def int_to_binary(int):
+    """Returns binary representation of int (for certain status/config values)."""
+    return '{0:b}'.format(int)
 
 
 class HttpConnector:
@@ -93,12 +100,21 @@ class HttpConnector:
         await self._websession.close()
 
 
+HOST = 'host'
+PORT = 'port'
+MAIL = 'mail'
+INTERFACE = 'interface'
+DEVICE = 'device'
+
+
 class HostData:
     """Connection info store."""
 
-    def __init__(self, host=None, port=DEFAULT_PORT,
-                 interface=DEFAULT_INTERFACE, mail=None):
-
+    def __init__(self, host_config):
+        host = host_config[HOST]
+        port = host_config[PORT]
+        interface = host_config[INTERFACE]
+        mail = host_config[MAIL]
         if host is None:
             raise RequestError("Invalid/None host data provided")
         if interface is None:
@@ -108,6 +124,7 @@ class HostData:
         self.email = mail
         self.hostname = socket.gethostname()
         self.baseurl = "http://{}:{}/".format(host, port)
+        print(interface)
         try:
             self.mac = netifaces.ifaddresses(interface)[
                 netifaces.AF_LINK][0]['addr'].upper()

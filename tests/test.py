@@ -20,8 +20,7 @@ async def test():
                              #mail=None, # test with mail == None
                              mail=TESTDATA["_mail"],
                              interface=TESTDATA["_interface"],
-                             session=session,
-                             sensors=TESTDATA["_sensors"])
+                             session=session)
 
         await atag.async_update()
         assert atag.paired

@@ -3,6 +3,7 @@ setup.cfg
 setup.py
 pyatag\__init__.py
 pyatag\const.py
+pyatag\discovery.py
 pyatag\errors.py
 pyatag\fakeinput.py
 pyatag\gateway.py

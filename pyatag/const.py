@@ -3,7 +3,7 @@
 DOMAIN = 'atag'
 ATAG_HANDLE = 'atag_data'
 DATA_LISTENER = 'atag_listener'
-REQUEST_INFO = 1 + 8 +64 # report, control, and details
+REQUEST_INFO = 1 + 8 + 64  # report, control, and details
 SIGNAL_UPDATE_ATAG = 'atag_update'
 CONF_INTERFACE = 'interface'
 
@@ -41,7 +41,7 @@ ATTR_REPORT_TIME = 'report_time'
 # ATTR_TARGET_TEMP_LOW = 'target_temp_low'
 # ATTR_TARGET_TEMP_STEP = 'target_temp_step'
 BOILER_STATUS = 'boiler_status'
-
+BOILER_CONF = 'boiler_config'
 UPDATE_MODE = 'update_mode'
 UPDATE_TEMP = 'update_temp'
 PAIR_PATH = 'pair'
@@ -82,12 +82,12 @@ SENSOR_TYPES = {
     'dhw_water_pres': ['Hot Water Pressure', 'Bar', 'mdi:gauge',
                        'dhw_water_pres'],
     BOILER_STATUS: ['Boiler Status', '', 'mdi:flash', 'boiler_status'],
-    'boiler_config': ['Boiler Config', '', 'mdi:flash', 'boiler_config'],
+    BOILER_CONF: ['Boiler Config', '', 'mdi:flash', 'boiler_config'],
     'burning_hours': ['Burning Hours', 'h', 'mdi:fire', 'burning_hours'],
     'voltage': ['Voltage', 'V', 'mdi:flash', 'voltage'],
     'current': ['Current', 'mA', 'mdi:flash-auto', 'current'],
     'flame_level': ['Flame', '%', 'mdi:fire', 'rel_mod_level'],
-    ATTR_REPORT_TIME:['Report Time', '', 'mdi:clock', ATTR_REPORT_TIME]
+    ATTR_REPORT_TIME: ['Report Time', '', 'mdi:clock', ATTR_REPORT_TIME]
 }
 
 REPORT_STRUCTURE = {
@@ -106,7 +106,8 @@ REPORT_STRUCTURE = {
               "dhw_temp_setp", "dhw_status", "dhw_mode", "dhw_mode_temp", "weather_temp",
               "weather_status", "vacation_duration", "extend_duration", "fireplace_duration"]
 }
-REPORT_STRUCTURE_INV = {v: i for i in REPORT_STRUCTURE for v in REPORT_STRUCTURE[i]}
+REPORT_STRUCTURE_INV = {
+    v: i for i in REPORT_STRUCTURE for v in REPORT_STRUCTURE[i]}
 BOILER_STATES = {
     14: 'Heating CV & Water',
     12: 'Heating Water',
@@ -119,7 +120,7 @@ BOILER_STATES = {
 
 WEATHER_STATES = {
     0: 'Sunny',
-    1: 'Clear', # Night
+    1: 'Clear',  # Night
     2: 'Rainy',
     3: 'Snowy',
     4: 'Icy',
@@ -127,8 +128,8 @@ WEATHER_STATES = {
     6: 'Misty',
     7: 'Cloudy',
     8: 'Partly Sunny',
-    9: 'Partly Cloudy', # Night
-    10: 'Shower', # Heavy rain?
+    9: 'Partly Cloudy',  # Night
+    10: 'Shower',  # Heavy rain?
     11: 'Thunder',
     12: 'Tornado',
     13: 'Unknown'
