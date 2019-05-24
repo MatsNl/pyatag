@@ -16,12 +16,6 @@ DEFAULT_TIMEOUT = 15
 DEFAULT_PORT = 10000
 DEFAULT_SCAN_INTERVAL = 120
 DEFAULT_INTERFACE = 'eth0'
-DEFAULT_SENSOR_SET = {
-    'current_temp',
-    'temperature',
-    'boiler_status',
-    'flame_level'
-}
 
 HTTP_HEADER = {
     'Content-type': 'applicaton/x-www-form-urlencoded;charset=UTF-8',
@@ -108,7 +102,7 @@ REPORT_STRUCTURE = {
               "regulation_state", "ch_m_dot_c", "c_house", "r_rad", "r_env", "alpha", "alpha_max",
               "delay", "mu", "threshold_offs", "wd_k_factor ", "wd_exponent",
               "lmuc_burner_hours", "lmuc_dhw_hours", "KP", "KI"],
-    CONTROL: ["ch_status", "ch_control_mode", "ch_mode", "c h_mode_duration", "ch_mode_temp",
+    CONTROL: ["ch_status", "ch_control_mode", "ch_mode", "ch_mode_duration", "ch_mode_temp",
               "dhw_temp_setp", "dhw_status", "dhw_mode", "dhw_mode_temp", "weather_temp",
               "weather_status", "vacation_duration", "extend_duration", "fireplace_duration"]
 }
@@ -125,19 +119,19 @@ BOILER_STATES = {
 
 WEATHER_STATES = {
     0: 'Sunny',
-    1: 1, # TBD
-    2: 2, # TBD
-    3: 3, # TBD
-    4: 4, # TBD
-    5: 5, # TBD
-    6: 6, # TBDs
+    1: 'Clear', # Night
+    2: 'Rainy',
+    3: 'Snowy',
+    4: 'Icy',
+    5: 'Windy',
+    6: 'Misty',
     7: 'Cloudy',
-    8: 'Mostly Cloudy',
-    9: 'Mostly Cloudy Night',
-    10: 10,
-    11: 11,
-    12: 12,
-    13: 13
+    8: 'Partly Sunny',
+    9: 'Partly Cloudy', # Night
+    10: 'Shower', # Heavy rain?
+    11: 'Thunder',
+    12: 'Tornado',
+    13: 'Unknown'
 }
 
 # fix for Google Assistant integration - use HEAT instead of MANUAL

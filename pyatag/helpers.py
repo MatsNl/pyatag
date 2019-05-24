@@ -14,25 +14,7 @@ from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS
 MAC = 'mac'
 HOSTNAME = 'hostname'
 MAIL = 'email'
-#STATE_UNKNOWN = 'unknown'
 URL = 'url'
-
-"""
-def get_host_data(host=None, port=DEFAULT_PORT, interface=DEFAULT_INTERFACE, mail=None):
-    Store connection information in dict.
-    if host is None:
-        raise AtagException("Invalid/None host data provided")
-    import netifaces
-    from socket import gethostname
-    data = {
-        URL: "http://{}:{}/".format(host, port),
-        MAC: netifaces.ifaddresses(interface)[
-            netifaces.AF_LINK][0]['addr'].upper(),
-        HOSTNAME: gethostname(),
-        MAIL: mail
-    }
-    return data
-"""
 
 def get_data_from_jsonreply(json_response):
     """Return relevant sensor data from json retrieve reply."""
@@ -66,9 +48,8 @@ def get_state_from_worker(sensor, worker):
         return INT_MODES[worker]
     if sensor == WEATHER_STATUS:
         if worker in WEATHER_STATES:
-            return WEATHER_STATES[worker]
-        else:
-            return worker
+            return [WEATHER_STATES[worker], worker, '{0:b}'.format(worker)]
+        return [worker, '{0:b}'.format(worker)]
     if sensor == ATTR_REPORT_TIME:
         return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
     return False

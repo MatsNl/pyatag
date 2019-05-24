@@ -1,5 +1,7 @@
 """Automatic discovery of ATAG Thermostat on LAN."""
 import asyncio
+ATAG_UDP_PORT = 11000
+LOCALHOST = '0.0.0.0'
 
 class Discovery(asyncio.DatagramProtocol):
     """Discovery class."""
@@ -15,8 +17,8 @@ async def discover_atag():
     """Discover Atag on local network."""
     # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)', ('xxx.xxx.x.x', xxxx)]
     trans, proto = await asyncio.get_event_loop().create_datagram_endpoint(
-        lambda: Discovery(), # fix Lambda not needed?
-        local_addr=('0.0.0.0', 11000))
+        Discovery,
+        local_addr=(LOCALHOST, ATAG_UDP_PORT))
     result = await proto.data
     trans.close()
     host_ip = result[1][0]
@@ -24,4 +26,4 @@ async def discover_atag():
     return host_ip, device_id
 
 # To dry run / test
-# asyncio.get_event_loop().run_until_complete(discover_atag())
+#asyncio.get_event_loop().run_until_complete(discover_atag())

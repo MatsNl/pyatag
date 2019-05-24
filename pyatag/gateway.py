@@ -1,8 +1,9 @@
 """Gateway connecting to ATAG thermostat."""
 import logging
 import aiohttp
+import asyncio
 
-from .const import (DEFAULT_SENSOR_SET, RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
+from .const import (RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
                     UPDATE_REPLY, ACC_STATUS)
 
 from .helpers import HostData, HttpConnector, get_data_from_jsonreply
@@ -16,13 +17,25 @@ class AtagDataStore:
 
     def __init__(
             self, session=None, host=None, port=None,
-            mail=None, interface=None, sensors=None):
-        ## Nog klussen: automatic host discovery + device id registry (+include in requests)
+            mail=None, interface=None):
+
+        self.initialized = False
+        self.paired = False
+        self.sensordata = {}
+        asyncio.create_task(self.async_initialization(session, host, port, mail, interface))
+        # Nog klussen: automatic host discovery + device id registry (+include in requests)
+
+    async def async_initialization(self, session=None, host=None, port=None, interface=None, mail=None):
+        """Datastore initialization has to be awaited in case host is unknown."""
         if host is None:
             from .discovery import discover_atag
-            host, device = discover_atag()
-            _LOGGER.warning("Found Atag at %s\nDevice id: %s", host, device)
-
+            try:
+                _LOGGER.debug(
+                    "No host data provided, attempting UDP discovery...")
+                host, device = await discover_atag()
+            except:
+                raise RequestError("Atag host discovery failed")
+            _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)
         try:
             self.host_data = HostData(
                 host=host, port=port, interface=interface, mail=mail)
@@ -33,15 +46,8 @@ class AtagDataStore:
         if type(session).__name__ == 'ClientSession':
             self._connector = HttpConnector(self.host_data, session)
         else:
-            _LOGGER.error("Not a valid session: %s", type(session).__name__)
-
-        self.data = {}
-        if sensors is None:
-            self.sensors = DEFAULT_SENSOR_SET
-        else:
-            self.sensors = sensors
-        self.sensordata = {}
-        self.paired = False
+            _LOGGER.error("Not a valid session: %s", type(session).__name__)   
+        self.initialized = True
 
     async def async_update(self):
         """Read data from thermostat."""
@@ -78,13 +84,17 @@ class AtagDataStore:
 
     async def async_check_pair_status(self):
         """Confirm we are authorized."""
+
         if self.paired:
             return True
+        if not self.initialized:
+            await self.async_initialization() # make that it doesnt need the input fields
         try:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
             status = json_data[PAIR_REPLY][ACC_STATUS]
         except ResponseError as err:
-            _LOGGER.error("Pairing failed\nPairmsg: %s\nError: %s", self.host_data.pair_msg, err)
+            _LOGGER.error("Pairing failed\nPairmsg: %s\nError: %s",
+                          self.host_data.pair_msg, err)
             return False
         if status == 2:
             self.paired = True
