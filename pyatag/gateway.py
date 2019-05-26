@@ -1,6 +1,5 @@
 """Gateway connecting to ATAG thermostat."""
 import logging
-import asyncio
 import aiohttp
 
 from .const import (RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
@@ -36,7 +35,6 @@ class AtagDataStore:
             INTERFACE: interface,
             DEVICE: None
         }
-        print(self.host_config)
         self.host_data = None
         self.sensordata = {}
         if self.host_config[HOST] is not None:
@@ -62,7 +60,6 @@ class AtagDataStore:
             _LOGGER.error("Not a valid session: %s",
                           type(self.session).__name__)
         self.initialized = True
-        print(self.initialized)
 
     async def async_find_atag(self):
         """Atag Discovery in case no host provided."""
@@ -73,7 +70,6 @@ class AtagDataStore:
             host, device = await discover_atag()
             self.host_config[HOST] = host
             self.host_config[DEVICE] = device
-            print(host)
         except:
             raise RequestError("Atag host discovery failed")
         _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)

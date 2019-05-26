@@ -7,7 +7,7 @@ import json
 from aiohttp import client_exceptions
 from .errors import RequestError, ResponseError
 from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS, BOILER_CONF,
-                    DEFAULT_TIMEOUT, DEFAULT_INTERFACE, DEFAULT_PORT, ATTR_OPERATION_MODE,
+                    DEFAULT_TIMEOUT, DEFAULT_INTERFACE, ATTR_OPERATION_MODE,
                     ATTR_REPORT_TIME, RETRIEVE_REPLY, DETAILS, REPORT, SENSOR_TYPES,
                     REPORT_STRUCTURE_INV, HTTP_HEADER, WEATHER_STATUS, WEATHER_STATES)
 
@@ -49,7 +49,7 @@ def get_state_from_worker(sensor, worker):
     if sensor == ATTR_OPERATION_MODE:
         return INT_MODES[worker]
     if sensor == WEATHER_STATUS:
-        return WEATHER_STATES[worker]
+        return WEATHER_STATES[worker] # list incl status string and icon
     if sensor == BOILER_CONF:
         return [worker, int_to_binary(worker)]
     if sensor == ATTR_REPORT_TIME:
@@ -57,9 +57,9 @@ def get_state_from_worker(sensor, worker):
     return False
 
 
-def int_to_binary(int):
+def int_to_binary(worker):
     """Returns binary representation of int (for certain status/config values)."""
-    return '{0:b}'.format(int)
+    return '{0:b}'.format(worker)
 
 
 class HttpConnector:
@@ -124,7 +124,6 @@ class HostData:
         self.email = mail
         self.hostname = socket.gethostname()
         self.baseurl = "http://{}:{}/".format(host, port)
-        print(interface)
         try:
             self.mac = netifaces.ifaddresses(interface)[
                 netifaces.AF_LINK][0]['addr'].upper()

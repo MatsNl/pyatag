@@ -119,20 +119,20 @@ BOILER_STATES = {
 }
 
 WEATHER_STATES = {
-    0: 'Sunny',
-    1: 'Clear',  # Night
-    2: 'Rainy',
-    3: 'Snowy',
-    4: 'Icy',
-    5: 'Windy',
-    6: 'Misty',
-    7: 'Cloudy',
-    8: 'Partly Sunny',
-    9: 'Partly Cloudy',  # Night
-    10: 'Shower',  # Heavy rain?
-    11: 'Thunder',
-    12: 'Tornado',
-    13: 'Unknown'
+    0: ['Sunny', 'mdi:weather-sunny'],
+    1: ['Clear', 'mdi:weather-night'],  
+    2: ['Rainy', 'mdi:weather-rainy'],
+    3: ['Snowy', 'mdi:weather-snowy'], # Not sure, Atag icons unclear
+    4: ['Haily', 'mdi:weather-hail'], # Not sure, Atag icons unclear
+    5: ['Windy', 'mdi:weather-windy'],
+    6: ['Misty', 'mdi:weather-fog'],
+    7: ['Cloudy', 'mdi:weather-cloudy'],
+    8: ['Partly Sunny', 'mdi:weather-partlycloudy'],
+    9: ['Partly Cloudy', 'mdi:cloud'], # Night with clouds..
+    10: ['Shower', 'mdi:weather-pouring'],  # Not sure, Atag icons unclear
+    11: ['Lightning', 'mdi:weather-lightning'],
+    12: ['Hurricane','mdi:weather-hurricane'],
+    13: ['Unknown', 'mdi:cloud-question']
 }
 
 # fix for Google Assistant integration - use HEAT instead of MANUAL
