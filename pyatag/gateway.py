@@ -27,6 +27,7 @@ class AtagDataStore:
         self.initialized = False
         self.paired = False
         self.session = session
+        self._connector = None
         # TODO: overlap met HostData eruit slopen // simpeler maken // self.session ?
         self.host_config = {
             HOST: host,
@@ -37,21 +38,24 @@ class AtagDataStore:
         }
         self.host_data = None
         self.sensordata = {}
-        if self.host_config[HOST] is not None:
-            self.finalize_init()
 
-        # TODO: fix dat dit niet 2x runt, blokkeert poort
-        # else:
-        #    print('No host, initiating discovery...')
-        #    asyncio.create_task(self.async_find_atag())
-
-    def finalize_init(self):
-        """Final init steps after host is known."""
+    async def async_finalize_init(self):
+        """Atag Discovery in case no host provided."""
+        if self.host_config[HOST] is None:
+            from .discovery import discover_atag
+            try:
+                _LOGGER.debug("No host provided, attempting discovery...")
+                host, device = await discover_atag()
+                self.host_config[HOST] = host
+                self.host_config[DEVICE] = device
+            except RequestError:
+                _LOGGER.error("Atag host discovery failed")
+                return False
+            _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)
         try:
             self.host_data = HostData(self.host_config)
         except RequestError:
-            _LOGGER.error(
-                "Initialization failed: Incorrect host data provided!")
+            _LOGGER.error("Initialization failed: Incorrect host data provided!")
         if self.session is None:
             self.session = aiohttp.ClientSession()
         if type(self.session).__name__ == 'ClientSession':
@@ -59,20 +63,6 @@ class AtagDataStore:
         else:
             _LOGGER.error("Not a valid session: %s", type(self.session).__name__)
         self.initialized = True
-
-    async def async_find_atag(self):
-        """Atag Discovery in case no host provided."""
-        from .discovery import discover_atag
-        try:
-            _LOGGER.debug(
-                "No host data provided, attempting UDP discovery...")
-            host, device = await discover_atag()
-            self.host_config[HOST] = host
-            self.host_config[DEVICE] = device
-        except:
-            raise RequestError("Atag host discovery failed")
-        _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)
-        self.finalize_init()
 
     async def async_update(self):
         """Read data from thermostat."""
@@ -113,7 +103,7 @@ class AtagDataStore:
         if self.paired:
             return True
         if not self.initialized:
-            await self.async_find_atag()
+            await self.async_finalize_init()
             if not self.initialized:
                 return False
         try:
