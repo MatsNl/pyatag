@@ -57,8 +57,7 @@ class AtagDataStore:
         if type(self.session).__name__ == 'ClientSession':
             self._connector = HttpConnector(self.host_data, self.session)
         else:
-            _LOGGER.error("Not a valid session: %s",
-                          type(self.session).__name__)
+            _LOGGER.error("Not a valid session: %s", type(self.session).__name__)
         self.initialized = True
 
     async def async_find_atag(self):
