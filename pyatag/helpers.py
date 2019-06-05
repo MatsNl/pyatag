@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 from numbers import Number
 import json
 
+import asyncio
 from aiohttp import client_exceptions
 from .errors import RequestError, ResponseError
 from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS, BOILER_CONF,
@@ -85,11 +86,10 @@ class HttpConnector:
                 json_result = json.loads(data)
                 return json_result
         except (client_exceptions.ClientError,
-                client_exceptions.ClientConnectorError, TimeoutError) as err:
+                client_exceptions.ClientConnectorError, asyncio.TimeoutError) as err:
             raise ResponseError("Error putting data Atag: {}".format(err))
         except json.JSONDecodeError as err:
-            raise ResponseError(
-                "Unable to decode Json response: {}".format(err))
+            raise ResponseError("Unable to decode Json response: {}".format(err))
 
     def set_timeout(self, timeout=DEFAULT_TIMEOUT):
         """Set timeout for API calls."""

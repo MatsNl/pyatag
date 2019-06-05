@@ -120,7 +120,7 @@ BOILER_STATES = {
 
 WEATHER_STATES = {
     0: ['Sunny', 'mdi:weather-sunny'],
-    1: ['Clear', 'mdi:weather-night'],  
+    1: ['Clear', 'mdi:weather-night'],
     2: ['Rainy', 'mdi:weather-rainy'],
     3: ['Snowy', 'mdi:weather-snowy'], # Not sure, Atag icons unclear
     4: ['Haily', 'mdi:weather-hail'], # Not sure, Atag icons unclear
@@ -131,7 +131,7 @@ WEATHER_STATES = {
     9: ['Partly Cloudy', 'mdi:cloud'], # Night with clouds..
     10: ['Shower', 'mdi:weather-pouring'],  # Not sure, Atag icons unclear
     11: ['Lightning', 'mdi:weather-lightning'],
-    12: ['Hurricane','mdi:weather-hurricane'],
+    12: ['Hurricane', 'mdi:weather-hurricane'],
     13: ['Unknown', 'mdi:cloud-question']
 }
 
