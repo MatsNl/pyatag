@@ -52,6 +52,9 @@ class AtagDataStore:
                 _LOGGER.error("Atag host discovery failed")
                 return False
             _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)
+        if self.host_config[INTERFACE] is None:
+            import netifaces
+            self.host_config[INTERFACE] = netifaces.gateways()['default'][netifaces.AF_INET][1]
         try:
             self.host_data = HostData(self.host_config)
         except RequestError:
@@ -79,14 +82,13 @@ class AtagDataStore:
             if sensordata:
                 self.sensordata = sensordata
         except ResponseError as err:
-            _LOGGER.warning('Atag sensor failed to update:\n%s', err)
+            _LOGGER.warning('Atag sensor failed to update:\nResponse:   %s', err)
 
-    async def async_set_atag(self, _target_mode=None, _target_temp=None):
+    async def async_set_atag(self, _target_mode=None, _target_temp=None, _extend_duration=None):
         """set mode and/or temperature."""
         json_payload = self.host_data.get_update_msg(
-            _target_mode, _target_temp)
-        _LOGGER.debug(
-            "Updating: Mode:[%s], Temp:[%s]", _target_mode, _target_temp)
+            _target_mode, _target_temp, _extend_duration)
+        _LOGGER.debug("Updating: Mode:[%s], Temp:[%s]", _target_mode, _target_temp)
         try:
             json_data = await self._connector.atag_put(data=json_payload, path=UPDATE_PATH)
             _LOGGER.debug("Update reply: %s", json_data)

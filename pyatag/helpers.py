@@ -8,7 +8,7 @@ import asyncio
 from aiohttp import client_exceptions
 from .errors import RequestError, ResponseError
 from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS, BOILER_CONF,
-                    DEFAULT_TIMEOUT, DEFAULT_INTERFACE, ATTR_OPERATION_MODE,
+                    DEFAULT_TIMEOUT, ATTR_OPERATION_MODE, INT_CH_CONTROLS, CONNECTION_STATES,
                     ATTR_REPORT_TIME, RETRIEVE_REPLY, DETAILS, REPORT, SENSOR_TYPES,
                     REPORT_STRUCTURE_INV, HTTP_HEADER, WEATHER_STATUS, WEATHER_STATES)
 
@@ -28,13 +28,18 @@ def get_data_from_jsonreply(json_response):
             datafield = SENSOR_TYPES[sensor][3]
             location = REPORT_STRUCTURE_INV[datafield]
             if sensor in [BOILER_STATUS, BOILER_CONF, ATTR_OPERATION_MODE,
-                          ATTR_REPORT_TIME, WEATHER_STATUS]:
+                          ATTR_REPORT_TIME, WEATHER_STATUS, "ch_status", "ch_control_mode",
+                          "dhw_status", "device_status",
+                          "connection_status", "date_time"]:
                 worker = int(_reply[location][datafield])
                 result[sensor] = get_state_from_worker(sensor, worker)
             else:
-                result[sensor] = float(_reply[location][datafield])
+                try:
+                    result[sensor] = float(_reply[location][datafield])
+                except ValueError:
+                    result[sensor] = _reply[location][datafield]
     except KeyError as err:
-        raise ResponseError(err)
+        raise ResponseError("Invalid value {} for {}".format(err, sensor))
     return result
 
 
@@ -49,11 +54,17 @@ def get_state_from_worker(sensor, worker):
         return BOILER_STATES[worker & 14]
     if sensor == ATTR_OPERATION_MODE:
         return INT_MODES[worker]
+    if sensor == "ch_control_mode":
+        return INT_CH_CONTROLS[worker]
+    if sensor == "connection_status":
+        if worker in CONNECTION_STATES:
+            return CONNECTION_STATES[worker]
+        return int(worker)
     if sensor == WEATHER_STATUS:
         return WEATHER_STATES[worker] # list incl status string and icon
-    if sensor == BOILER_CONF:
-        return [worker, int_to_binary(worker)]
-    if sensor == ATTR_REPORT_TIME:
+    if sensor in [BOILER_CONF, "ch_status", "dhw_status", "device_status"]:
+        return [worker, int_to_binary(worker)] # values TBD..
+    if sensor in [ATTR_REPORT_TIME, "date_time"]:
         return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
     return False
 
@@ -99,7 +110,6 @@ class HttpConnector:
         """Close the connection"""
         await self._websession.close()
 
-
 HOST = 'host'
 PORT = 'port'
 MAIL = 'mail'
@@ -117,13 +127,13 @@ class HostData:
         mail = host_config[MAIL]
         if host is None:
             raise RequestError("Invalid/None host data provided")
-        if interface is None:
-            interface = DEFAULT_INTERFACE
         import netifaces
         import socket
         self.email = mail
         self.hostname = socket.gethostname()
         self.baseurl = "http://{}:{}/".format(host, port)
+        if interface is None:
+            interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
         try:
             self.mac = netifaces.ifaddresses(interface)[
                 netifaces.AF_LINK][0]['addr'].upper()
@@ -171,7 +181,7 @@ class HostData:
         }
         self.pair_msg = json_payload
 
-    def get_update_msg(self, _target_mode=None, _target_temp=None):
+    def get_update_msg(self, _target_mode=None, _target_temp=None, _extend_duration=None):
         """Get and return the update payload (mode and temp)."""
 
         _target_mode_int = None
@@ -196,6 +206,7 @@ class HostData:
                 },
                 'control': {
                     'ch_mode': _target_mode_int,
+                    'extend_duration': _extend_duration,
                     'ch_mode_temp': _target_temp
                 }
             }

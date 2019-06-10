@@ -9,7 +9,7 @@ class Discovery(asyncio.DatagramProtocol):
     def __init__(self):
         self.data = asyncio.Future()
     def connection_made(self, transport):
-        print("connected")
+        print("Listening on UDP {}".format(ATAG_UDP_PORT))
     def datagram_received(self, data, addr):
         self.data.set_result([data, addr])
 
