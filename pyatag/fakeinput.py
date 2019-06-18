@@ -1,6 +1,6 @@
 """Base data to initiate an AtagDataStore."""
 
-host_config = {
+HOST_CONFIG = {
     "host": "",  # atag IP
     "port": 10000,
     "mail": "",  # email registered in portal

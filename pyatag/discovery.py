@@ -4,12 +4,16 @@ from .helpers import RequestError
 ATAG_UDP_PORT = 11000
 LOCALHOST = '0.0.0.0'
 
+
 class Discovery(asyncio.DatagramProtocol):
     """Discovery class."""
+
     def __init__(self):
         self.data = asyncio.Future()
+
     def connection_made(self, transport):
         print("Listening on UDP {}".format(ATAG_UDP_PORT))
+
     def datagram_received(self, data, addr):
         self.data.set_result([data, addr])
 
@@ -31,4 +35,4 @@ async def discover_atag():
     return host_ip, device_id
 
 # To dry run / test
-#asyncio.get_event_loop().run_until_complete(discover_atag())
+# asyncio.get_event_loop().run_until_complete(discover_atag())

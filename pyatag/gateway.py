@@ -51,17 +51,20 @@ class AtagDataStore:
             _LOGGER.debug("Found Atag at %s\nDevice id: %s", host, device)
         if self.host_config[INTERFACE] is None:
             import netifaces
-            self.host_config[INTERFACE] = netifaces.gateways()['default'][netifaces.AF_INET][1]
+            self.host_config[INTERFACE] = netifaces.gateways()[
+                'default'][netifaces.AF_INET][1]
         try:
             self.host_data = HostData(self.host_config)
         except RequestError:
-            _LOGGER.error("Initialization failed: Incorrect host data provided!")
+            _LOGGER.error(
+                "Initialization failed: Incorrect host data provided!")
         if self.session is None:
             self.session = aiohttp.ClientSession()
         if type(self.session).__name__ == 'ClientSession':
             self._connector = HttpConnector(self.host_data, self.session)
         else:
-            _LOGGER.error("Not a valid session: %s", type(self.session).__name__)
+            _LOGGER.error("Not a valid session: %s",
+                          type(self.session).__name__)
         self.initialized = True
 
     async def async_update(self):
@@ -69,7 +72,8 @@ class AtagDataStore:
         if not self.paired:
             _LOGGER.debug("Atag not paired yet - attempting..")
             if not await self.async_check_pair_status():
-                _LOGGER.error("Pairing failed - please confirm pairing on device")
+                _LOGGER.error(
+                    "Pairing failed - please confirm pairing on device")
                 return
         try:
             json_data = await self._connector.atag_put(data=self.host_data.retrieve_msg)
@@ -78,7 +82,8 @@ class AtagDataStore:
             if sensordata:
                 self.sensordata = sensordata
         except ResponseError as err:
-            _LOGGER.warning('Atag sensor failed to update:\nResponse:   %s', err)
+            _LOGGER.warning(
+                'Atag sensor failed to update:\nResponse:   %s', err)
 
     async def async_set_atag(self, **kwargs):
         """set mode and/or temperature."""
@@ -106,8 +111,7 @@ class AtagDataStore:
             json_data = await self._connector.atag_put(data=self.host_data.pair_msg)
             status = check_reply(json_data)
         except ResponseError as err:
-            _LOGGER.error("Pairing failed\nPairmsg: %s\nError: %s",
-                          self.host_data.pair_msg, err)
+            _LOGGER.error("Pairing failed\nPairmsg: %s\nError: %s", self.host_data.pair_msg, err)
             return False
         if status == 2:
             self.paired = True

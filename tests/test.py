@@ -16,11 +16,11 @@ async def test():
     from .input import TESTDATA
     pretty = pprint.PrettyPrinter(indent=2)
     async with aiohttp.ClientSession() as session:
-        atag = AtagDataStore(host=TESTDATA["_host"],
+        atag = AtagDataStore(host=None, # TESTDATA["_host"],
                              port=TESTDATA["_port"],
                              #mail=None, # test with mail == None
                              mail=TESTDATA["_mail"],
-                             interface=TESTDATA["_interface"],
+                             interface=None, # TESTDATA["_interface"],
                              session=session)
 
         await atag.async_update()

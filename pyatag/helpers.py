@@ -9,7 +9,7 @@ from aiohttp import client_exceptions
 from .errors import RequestError, ResponseError
 from .const import (REQUEST_INFO, SENSOR_VALUES, BOILER_STATUS,
                     DEFAULT_TIMEOUT, DETAILS, REPORT, CONTROLS,
-                    HTTP_HEADER, STATUS, CONTROL)
+                    HTTP_HEADER)
 
 MAC = 'mac'
 HOSTNAME = 'hostname'
@@ -22,6 +22,7 @@ MSG_TO_PATH = {
     'pair_message': 'pair'
 }
 RETRIEVE_REPLY = 'retrieve_reply'
+
 
 def get_data_from_jsonreply(json_response):
     """Return relevant sensor data from json retrieve reply."""
@@ -48,9 +49,11 @@ def get_data_from_jsonreply(json_response):
         raise ResponseError("Invalid value {} for {}".format(err, group))
     return result
 
+
 def check_reply(json_reply):
     """reutrn the account status in an atag reply."""
     return json_reply[list(json_reply.keys())[0]]['acc_status']
+
 
 def get_state_from_worker(key, worker):
     """
@@ -64,8 +67,10 @@ def get_state_from_worker(key, worker):
     if SENSOR_VALUES[key] == 'time':
         return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
     if SENSOR_VALUES[key] == 'int':
-        return [worker, int_to_binary(worker)] # not yet decoded integer values
+        # not yet decoded integer values
+        return [worker, int_to_binary(worker)]
     return SENSOR_VALUES[key][worker]
+
 
 def int_to_binary(worker):
     """Returns binary representation of int (for certain status/config values)."""
@@ -98,7 +103,8 @@ class HttpConnector:
                 client_exceptions.ClientConnectorError, asyncio.TimeoutError) as err:
             raise ResponseError("Error putting data Atag: {}".format(err))
         except json.JSONDecodeError as err:
-            raise ResponseError("Unable to decode Json response: {}".format(err))
+            raise ResponseError(
+                "Unable to decode Json response: {}".format(err))
 
     def set_timeout(self, timeout=DEFAULT_TIMEOUT):
         """Set timeout for API calls."""
@@ -108,11 +114,13 @@ class HttpConnector:
         """Close the connection"""
         await self._websession.close()
 
+
 HOST = 'host'
 PORT = 'port'
 MAIL = 'mail'
 INTERFACE = 'interface'
 DEVICE = 'device'
+
 
 class HostData:
     """Connection info store."""
@@ -182,7 +190,8 @@ class HostData:
         """Return the update payload for control input."""
         for key, value in kwargs.items():
             if not key in CONTROLS or not isinstance(value, Number):
-                raise RequestError("Invalid values received: {}: {}".format(key, value))
+                raise RequestError(
+                    "Invalid values received: {}: {}".format(key, value))
 
         json_payload = {
             'update_message': {
@@ -197,6 +206,7 @@ class HostData:
         }
 
         for key, value in kwargs.items():
-            json_payload['update_message']['control'][CONTROLS.get(key)] = value
+            json_payload['update_message']['control'][CONTROLS.get(
+                key)] = value
 
         return json_payload

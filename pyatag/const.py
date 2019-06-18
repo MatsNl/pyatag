@@ -1,6 +1,5 @@
 """Constants for ATAG API."""
 
-REQUEST_INFO = 71 # control(1), schedules (2), configuration (4) and detailed report (64)
 CONF_INTERFACE = 'interface'
 
 STATE_HEAT = 'heat'
