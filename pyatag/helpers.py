@@ -7,16 +7,21 @@ import json
 import asyncio
 from aiohttp import client_exceptions
 from .errors import RequestError, ResponseError
-from .const import (REQUEST_INFO, MODES, INT_MODES, BOILER_STATES, BOILER_STATUS, BOILER_CONF,
-                    DEFAULT_TIMEOUT, ATTR_OPERATION_MODE, INT_CH_CONTROLS, CONNECTION_STATES,
-                    ATTR_REPORT_TIME, RETRIEVE_REPLY, DETAILS, REPORT, SENSOR_TYPES,
-                    REPORT_STRUCTURE_INV, HTTP_HEADER, WEATHER_STATUS, WEATHER_STATES)
+from .const import (REQUEST_INFO, SENSOR_VALUES, BOILER_STATUS,
+                    DEFAULT_TIMEOUT, DETAILS, REPORT, CONTROLS,
+                    HTTP_HEADER, STATUS, CONTROL)
 
 MAC = 'mac'
 HOSTNAME = 'hostname'
 MAIL = 'email'
 URL = 'url'
 
+MSG_TO_PATH = {
+    'update_message': 'update',
+    'retrieve_message': 'retrieve',
+    'pair_message': 'pair'
+}
+RETRIEVE_REPLY = 'retrieve_reply'
 
 def get_data_from_jsonreply(json_response):
     """Return relevant sensor data from json retrieve reply."""
@@ -24,50 +29,43 @@ def get_data_from_jsonreply(json_response):
     try:
         _reply = json_response[RETRIEVE_REPLY]
         _reply[DETAILS] = _reply[REPORT][DETAILS]
-        for sensor in SENSOR_TYPES:
-            datafield = SENSOR_TYPES[sensor][3]
-            location = REPORT_STRUCTURE_INV[datafield]
-            if sensor in [BOILER_STATUS, BOILER_CONF, ATTR_OPERATION_MODE,
-                          ATTR_REPORT_TIME, WEATHER_STATUS, "ch_status", "ch_control_mode",
-                          "dhw_status", "device_status",
-                          "connection_status", "date_time"]:
-                worker = int(_reply[location][datafield])
-                result[sensor] = get_state_from_worker(sensor, worker)
-            else:
-                try:
-                    result[sensor] = float(_reply[location][datafield])
-                except ValueError:
-                    result[sensor] = _reply[location][datafield]
+        for group in _reply.keys():
+            if group in ['seqnr', 'acc_status']:
+                continue
+            for key in _reply[group]:
+                if key == DETAILS:
+                    break
+                if key in SENSOR_VALUES:
+                    worker = int(_reply[group][key])
+                    result[key] = get_state_from_worker(key, worker)
+                else:
+                    res = _reply[group][key]
+                    if isinstance(res, Number):
+                        result[key] = float(res)
+                    else:
+                        result[key] = res
     except KeyError as err:
-        raise ResponseError("Invalid value {} for {}".format(err, sensor))
+        raise ResponseError("Invalid value {} for {}".format(err, group))
     return result
 
+def check_reply(json_reply):
+    """reutrn the account status in an atag reply."""
+    return json_reply[list(json_reply.keys())[0]]['acc_status']
 
-def get_state_from_worker(sensor, worker):
+def get_state_from_worker(key, worker):
     """
     Returns:\n
-    Boiler status based on binary indicator.\n
-    Operation mode and Weather status from Atag int.\n
-    Report time based on seconds from 2000 (UTC).
+    Sensor values when decoded (int based).\n
+    Binary representation when not decoded.\n
+    Time based on seconds from 2000 (UTC).
     """
-    if sensor == BOILER_STATUS:
-        return BOILER_STATES[worker & 14]
-    if sensor == ATTR_OPERATION_MODE:
-        return INT_MODES[worker]
-    if sensor == "ch_control_mode":
-        return INT_CH_CONTROLS[worker]
-    if sensor == "connection_status":
-        if worker in CONNECTION_STATES:
-            return CONNECTION_STATES[worker]
-        return int(worker)
-    if sensor == WEATHER_STATUS:
-        return WEATHER_STATES[worker] # list incl status string and icon
-    if sensor in [BOILER_CONF, "ch_status", "dhw_status", "device_status"]:
-        return [worker, int_to_binary(worker)] # values TBD..
-    if sensor in [ATTR_REPORT_TIME, "date_time"]:
+    if key == BOILER_STATUS:
+        return SENSOR_VALUES[BOILER_STATUS][worker & 14]
+    if SENSOR_VALUES[key] == 'time':
         return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
-    return False
-
+    if SENSOR_VALUES[key] == 'int':
+        return [worker, int_to_binary(worker)] # not yet decoded integer values
+    return SENSOR_VALUES[key][worker]
 
 def int_to_binary(worker):
     """Returns binary representation of int (for certain status/config values)."""
@@ -83,9 +81,9 @@ class HttpConnector:
         self._websession = websession
         self._request_timeout = DEFAULT_TIMEOUT
 
-    async def atag_put(self, data, path):
+    async def atag_put(self, data):
         """Make a put request to the API."""
-
+        path = MSG_TO_PATH.get(list(data.keys())[0])
         posturl = '{}{}'.format(self.hostdata.baseurl, path)
         try:
             async with self._websession.put(
@@ -115,7 +113,6 @@ PORT = 'port'
 MAIL = 'mail'
 INTERFACE = 'interface'
 DEVICE = 'device'
-
 
 class HostData:
     """Connection info store."""
@@ -181,21 +178,11 @@ class HostData:
         }
         self.pair_msg = json_payload
 
-    def get_update_msg(self, _target_mode=None, _target_temp=None, _extend_duration=None):
-        """Get and return the update payload (mode and temp)."""
-
-        _target_mode_int = None
-        if _target_mode is None and _target_temp is None:
-            raise RequestError("No update data received")
-        if _target_mode is not None:
-            if _target_mode in MODES:
-                _target_mode_int = MODES[_target_mode]
-            else:
-                raise RequestError(
-                    "Invalid update mode: {}".format(_target_mode))
-        elif _target_temp is not None and not isinstance(_target_temp, Number):
-            raise RequestError(
-                "Not a valid temperature: {}".format(_target_temp))
+    def get_update_msg(self, **kwargs):
+        """Return the update payload for control input."""
+        for key, value in kwargs.items():
+            if not key in CONTROLS or not isinstance(value, Number):
+                raise RequestError("Invalid values received: {}: {}".format(key, value))
 
         json_payload = {
             'update_message': {
@@ -205,10 +192,11 @@ class HostData:
                     'mac_address': self.mac
                 },
                 'control': {
-                    'ch_mode': _target_mode_int,
-                    'extend_duration': _extend_duration,
-                    'ch_mode_temp': _target_temp
                 }
             }
         }
+
+        for key, value in kwargs.items():
+            json_payload['update_message']['control'][CONTROLS.get(key)] = value
+
         return json_payload

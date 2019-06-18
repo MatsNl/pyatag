@@ -2,10 +2,7 @@
 import logging
 import aiohttp
 
-from .const import (RETRIEVE_PATH, UPDATE_PATH, PAIR_PATH, PAIR_REPLY,
-                    UPDATE_REPLY, ACC_STATUS)
-
-from .helpers import HostData, HttpConnector, get_data_from_jsonreply
+from .helpers import HostData, HttpConnector, get_data_from_jsonreply, check_reply
 from .errors import ResponseError, RequestError
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,29 +69,26 @@ class AtagDataStore:
         if not self.paired:
             _LOGGER.debug("Atag not paired yet - attempting..")
             if not await self.async_check_pair_status():
-                _LOGGER.error(
-                    "Pairing failed - please confirm pairing on device")
+                _LOGGER.error("Pairing failed - please confirm pairing on device")
                 return
         try:
-            json_data = await self._connector.atag_put(
-                data=self.host_data.retrieve_msg, path=RETRIEVE_PATH)
+            json_data = await self._connector.atag_put(data=self.host_data.retrieve_msg)
+            print(json_data)
             sensordata = get_data_from_jsonreply(json_data)
             if sensordata:
                 self.sensordata = sensordata
         except ResponseError as err:
             _LOGGER.warning('Atag sensor failed to update:\nResponse:   %s', err)
 
-    async def async_set_atag(self, _target_mode=None, _target_temp=None, _extend_duration=None):
+    async def async_set_atag(self, **kwargs):
         """set mode and/or temperature."""
-        json_payload = self.host_data.get_update_msg(
-            _target_mode, _target_temp, _extend_duration)
-        _LOGGER.debug("Updating: Mode:[%s], Temp:[%s]", _target_mode, _target_temp)
+
+        json_payload = self.host_data.get_update_msg(**kwargs)
         try:
-            json_data = await self._connector.atag_put(data=json_payload, path=UPDATE_PATH)
+            json_data = await self._connector.atag_put(data=json_payload)
             _LOGGER.debug("Update reply: %s", json_data)
-            if not json_data[UPDATE_REPLY][ACC_STATUS] == 2:
-                raise ResponseError(
-                    "Invalid update reply received: {}".format(json_data))
+            if not check_reply(json_data):
+                raise ResponseError("Invalid reply from Atag: {}".format(json_data))
         except (ResponseError, KeyError) as err:
             _LOGGER.error("Failed to set Atag: %s", err)
             return False
@@ -109,8 +103,8 @@ class AtagDataStore:
             if not self.initialized:
                 return False
         try:
-            json_data = await self._connector.atag_put(data=self.host_data.pair_msg, path=PAIR_PATH)
-            status = json_data[PAIR_REPLY][ACC_STATUS]
+            json_data = await self._connector.atag_put(data=self.host_data.pair_msg)
+            status = check_reply(json_data)
         except ResponseError as err:
             _LOGGER.error("Pairing failed\nPairmsg: %s\nError: %s",
                           self.host_data.pair_msg, err)

@@ -1,21 +1,20 @@
 """Constants for ATAG API."""
 
-DOMAIN = 'atag'
-ATAG_HANDLE = 'atag_data'
-DATA_LISTENER = 'atag_listener'
-REQUEST_INFO = 1 + 8 + 64  # report, control, and details
-SIGNAL_UPDATE_ATAG = 'atag_update'
+REQUEST_INFO = 71 # control(1), schedules (2), configuration (4) and detailed report (64)
 CONF_INTERFACE = 'interface'
 
 STATE_HEAT = 'heat'
 STATE_ECO = 'eco'
 STATE_AUTO = 'auto'
 STATE_MANUAL = 'manual'
-STATE_HOLD = 'hold_mode'
+STATE_EXTEND = 'extend'
+STATE_OFF = 'off'
 
 DEFAULT_TIMEOUT = 15
 DEFAULT_PORT = 10000
 DEFAULT_SCAN_INTERVAL = 120
+DEFAULT_MIN_TEMP = 12
+DEFAULT_MAX_TEMP = 21
 
 HTTP_HEADER = {
     'Content-type': 'applicaton/x-www-form-urlencoded;charset=UTF-8',
@@ -23,37 +22,55 @@ HTTP_HEADER = {
     'User-Agent': 'Mozilla/5.0 (compatible; AtagOneAPI/x; http://atag.one/)'
 }
 
-ATTR_CURRENT_TEMPERATURE = 'current_temperature'
-ATTR_MAX_TEMP = 'max_temp'
-ATTR_MIN_TEMP = 'min_temp'
-ATTR_OPERATION_LIST = 'operation_list'
-ATTR_OPERATION_MODE = 'operation_mode'
-ATTR_OPERATION_MODE_INT = 'ch_mode'
-ATTR_TEMPERATURE_SET = 'shown_set_temp'
-ATTR_TEMPERATURE = 'temperature'
-ATTR_REPORT_TIME = 'report_time'
+# CH constants
+CH_STATE = "ch_status"
+CH_CURRENT_TEMPERATURE = 'current_temperature'
+CH_MAX_TEMP = 'max_temp'
+CH_MIN_TEMP = 'min_temp'
+CH_OPERATION_LIST = 'operation_list'
+CH_OPERATION_MODE = 'operation_mode'
+CH_TEMPERATURE = 'temperature'
+CH_OPERATION_CONTROL = 'ch_control_mode' # TBD HA
+CH_MODE_DURATION = 'ch_mode_duration' # TBD HA
+CH_HOLD_DURATION = 'extend_duration' # TBD HA
+VACATION = 'vacation_duration' # TBD HA
+FIREPLACE_DURATION = 'fireplace_duration' # TBD HA
+REPORT_TIME = 'report_time'
 BOILER_STATUS = 'boiler_status'
 BOILER_CONF = 'boiler_config'
-UPDATE_MODE = 'update_mode'
-UPDATE_TEMP = 'update_temp'
-PAIR_PATH = 'pair'
-UPDATE_PATH = 'update'
-RETRIEVE_PATH = 'retrieve'
-UPDATE_REPLY = 'update_reply'
-RETRIEVE_REPLY = 'retrieve_reply'
-PAIR_REPLY = 'pair_reply'
+
+# DHW constants
+DHW_STATE = "dhw_status"
+DHW_CURRENT_TEMPERATURE = 'dhw_water_temp'
+DHW_TEMPERATURE = 'dhw_temp_setp' # TBD HA
+DHW_OPERATION_MODE = "dhw_mode" # TBD HA
+DHW_MODE_TEMPERATURE = 'dhw_mode_temp' # TBD HA
+
 STATUS = 'status'
 REPORT = 'report'
 CONTROL = 'control'
 DETAILS = 'details'
 ACC_STATUS = 'acc_status'
 WEATHER_STATUS = 'weather_status'
+WEATHER_CURRENT_TEMPERATURE = 'weather_current_temperature'
 
-DEFAULT_NAME = 'Atag One Thermostat'
-DEFAULT_MIN_TEMP = 12
-DEFAULT_MAX_TEMP = 21
+CONTROLS = {
+    CH_STATE: "ch_status",
+    CH_OPERATION_CONTROL: "ch_control_mode",
+    CH_OPERATION_MODE: "ch_mode",
+    CH_MODE_DURATION: "ch_mode_duration",
+    CH_TEMPERATURE: "ch_mode_temp",
+    CH_HOLD_DURATION: "extend_duration",
+    FIREPLACE_DURATION: "fireplace_duration",
+    VACATION: "vacation_duration",
+    DHW_TEMPERATURE: "dhw_temp_setp",
+    DHW_STATE: "dhw_status",
+    DHW_OPERATION_MODE:"dhw_mode",
+    DHW_MODE_TEMPERATURE: "dhw_mode_temp",
+    WEATHER_STATUS: 'weather_status',
+    WEATHER_CURRENT_TEMPERATURE: 'weather_temp'
+}
 
-SENSOR_PREFIX = 'Atag '
 REPORT_STRUCTURE = {
     STATUS: ["device_id", "device_status", "connection_status", "date_time"],
     REPORT: ["report_time", "burning_hours", "device_errors", "boiler_errors", "room_temp",
@@ -76,64 +93,48 @@ SENSOR_TYPES = {
     'device_status': ['One status', '', 'mdi:account-card-details-outline', 'device_status'],
     'connection_status': ['Connection', '', 'mdi:wifi', 'connection_status'],
     'date_time': ['Datetime', '', 'mdi:calendar-clock', 'date_time'],
-    ATTR_CURRENT_TEMPERATURE: ['Current Temperature', '°C', 'mdi:thermometer', 'room_temp'],
+    CH_CURRENT_TEMPERATURE: ['Current Temperature', '°C', 'mdi:thermometer', 'room_temp'],
     'outside_temp': ['Outside Temp', '°C', 'mdi:thermometer', 'outside_temp'],
     'outside_temp_avg': ['Average Outside Temperature', '°C', 'mdi:thermometer', 'tout_avg'],
     WEATHER_STATUS: ['Weather Status', '', 'mdi:white-balance-sunny', 'weather_status'],
     'pcb_temp': ['PCB Temperature', '°C', 'mdi:thermometer', 'pcb_temp'],
-    ATTR_TEMPERATURE: ['Target Temperature', '°C', 'mdi:thermometer', ATTR_TEMPERATURE_SET],
-    ATTR_OPERATION_MODE: ['Operation Mode', '', 'mdi:settings', ATTR_OPERATION_MODE_INT],
+    CH_TEMPERATURE: ['Target Temperature', '°C', 'mdi:thermometer', 'shown_set_temp'],
+    CH_OPERATION_MODE: ['Operation Mode', '', 'mdi:settings', 'ch_mode'],
     'ch_water_pressure': ['Central Heating Pressure', 'Bar', 'mdi:gauge', 'ch_water_pres'],
     'ch_water_temp': ['CH Water Temperature', '°C', 'mdi:thermometer', 'ch_water_temp'],
     'ch_return_temp': ['CH Return Temperature', '°C', 'mdi:thermometer', 'ch_return_temp'],
-    'dhw_water_temp': ['Hot Water Temp', '°C', 'mdi:thermometer', 'dhw_water_temp'],
+    DHW_TEMPERATURE: ['Hot Water Temp', '°C', 'mdi:thermometer', 'dhw_water_temp'],
     'dhw_water_pres': ['Hot Water Pressure', 'Bar', 'mdi:gauge', 'dhw_water_pres'],
+    'dhw_flow_rate': ['Hot Water Flow Rate', '?', 'mdi:gauge', 'dhw_flow_rate'],
     BOILER_STATUS: ['Boiler Status', '', 'mdi:flash', 'boiler_status'],
     BOILER_CONF: ['Boiler Config', '', 'mdi:flash', 'boiler_config'],
     'burning_hours': ['Burning Hours', 'h', 'mdi:fire', 'burning_hours'],
     'voltage': ['Voltage', 'V', 'mdi:flash', 'voltage'],
     'current': ['Current', 'mA', 'mdi:flash-auto', 'current'],
     'flame_level': ['Flame', '%', 'mdi:fire', 'rel_mod_level'],
-    ATTR_REPORT_TIME: ['Report Time', '', 'mdi:clock', ATTR_REPORT_TIME],
-    "ch_status": ["ch_status", '', 'mdi:flash', "ch_status"],
-    "ch_control_mode": ["ch_control_mode", '', 'mdi:flash', "ch_control_mode"],
-    "ch_mode_duration": ["ch_mode_duration", '', 'mdi:flash', "ch_mode_duration"],
-    "dhw_temp_setp": ["dhw_temp_setpoint", '', 'mdi:flash', "dhw_temp_setp"],
-    "dhw_status": ["dhw_status", '', 'mdi:flash', "dhw_status"],
-    "dhw_mode": ["dhw_mode", '', 'mdi:flash', "dhw_mode"],
-    "dhw_mode_temp": ["dhw_mode_temp", '', 'mdi:flash', "dhw_mode_temp"],
-    "weather_temp": ["weather_temp", '', 'mdi:flash', "weather_temp"],
-    "weather_status": ["weather_status", '', 'mdi:flash', "weather_status"],
-    "vacation_duration": ["vacation_duration", '', 'mdi:flash', "vacation_duration"],
-    "extend_duration": ["extend_duration", '', 'mdi:flash', "extend_duration"],
-    "fireplace_duration": ["fireplace_duration", '', 'mdi:flash', "fireplace_duration"]
+    REPORT_TIME: ['Report Time', '', 'mdi:clock', 'report_time'],
 }
+
+for i in CONTROLS:
+    if i not in SENSOR_TYPES:
+        SENSOR_TYPES[i] = [i, '', 'mdi:flash', CONTROLS[i]]
 
 REPORT_STRUCTURE_INV = {
     v: i for i in REPORT_STRUCTURE for v in REPORT_STRUCTURE[i]}
+
 BOILER_STATES = {
     14: 'Heating CV & Water',
     12: 'Heating Water',
     10: 'Heating CV',
     8: 'Heating Boiler',
-    4: 'Water active',
-    2: 'CV active',
+    4: 'Pumping Water',
+    2: 'Pumping CV',
     0: 'Idle'
 }
 
 CONNECTION_STATES = {
     23: "Connected to BCU"
 }
-
-CH_CONTROL_MODES = {
-    0: 'Thermostat',
-    1: 'Weather dependent'
-}
-
-# CH_STATUS = {
-#     33: 'Heating type: Convectors / Air heating?', # 8
-#     1: 'Heating type: Radiators & Floor'
-# }
 
 WEATHER_STATES = {
     0: ['Sunny', 'mdi:weather-sunny'],
@@ -152,9 +153,22 @@ WEATHER_STATES = {
     13: ['Unknown', 'mdi:cloud-question']
 }
 
-# fix for Google Assistant integration - use HEAT instead of MANUAL
-MODES = {STATE_HEAT: 1, STATE_AUTO: 2, STATE_HOLD: 4}
+MODES = {STATE_MANUAL: 1, STATE_AUTO: 2, STATE_EXTEND: 4}
 INT_MODES = {v: k for k, v in MODES.items()}
 
 CH_CONTROLS = {'Thermostat': 0, 'Weather based': 1}
 INT_CH_CONTROLS = {v: k for k, v in CH_CONTROLS.items()}
+
+SENSOR_VALUES = {
+    "report_time": 'time',
+    "date_time": 'time',
+    "weather_status": WEATHER_STATES,
+    "connection_status": CONNECTION_STATES,
+    "boiler_status": BOILER_STATES,
+    "ch_control_mode": INT_CH_CONTROLS,
+    'ch_mode': INT_MODES,
+    'boiler_config': 'int',
+    "ch_status": 'int',
+    "dhw_status": 'int',
+    "device_status": 'int'
+}
