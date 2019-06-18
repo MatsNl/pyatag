@@ -14,6 +14,7 @@ DEFAULT_PORT = 10000
 DEFAULT_SCAN_INTERVAL = 120
 DEFAULT_MIN_TEMP = 12
 DEFAULT_MAX_TEMP = 21
+REQUEST_INFO = 71
 
 HTTP_HEADER = {
     'Content-type': 'applicaton/x-www-form-urlencoded;charset=UTF-8',
@@ -102,7 +103,7 @@ SENSOR_TYPES = {
     'ch_water_pressure': ['Central Heating Pressure', 'Bar', 'mdi:gauge', 'ch_water_pres'],
     'ch_water_temp': ['CH Water Temperature', '°C', 'mdi:thermometer', 'ch_water_temp'],
     'ch_return_temp': ['CH Return Temperature', '°C', 'mdi:thermometer', 'ch_return_temp'],
-    DHW_TEMPERATURE: ['Hot Water Temp', '°C', 'mdi:thermometer', 'dhw_water_temp'],
+    DHW_CURRENT_TEMPERATURE: ['Hot Water Temp', '°C', 'mdi:thermometer', 'dhw_water_temp'],
     'dhw_water_pres': ['Hot Water Pressure', 'Bar', 'mdi:gauge', 'dhw_water_pres'],
     'dhw_flow_rate': ['Hot Water Flow Rate', '?', 'mdi:gauge', 'dhw_flow_rate'],
     BOILER_STATUS: ['Boiler Status', '', 'mdi:flash', 'boiler_status'],

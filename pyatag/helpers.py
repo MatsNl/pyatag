@@ -69,8 +69,9 @@ def get_state_from_worker(key, worker):
     if SENSOR_VALUES[key] == 'int':
         # not yet decoded integer values
         return [worker, int_to_binary(worker)]
-    return SENSOR_VALUES[key][worker]
-
+    if worker in SENSOR_VALUES[key]:
+        return SENSOR_VALUES[key][worker]
+    return worker # not yet figured out what it means
 
 def int_to_binary(worker):
     """Returns binary representation of int (for certain status/config values)."""

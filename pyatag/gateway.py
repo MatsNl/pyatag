@@ -77,7 +77,6 @@ class AtagDataStore:
                 return
         try:
             json_data = await self._connector.atag_put(data=self.host_data.retrieve_msg)
-            print(json_data)
             sensordata = get_data_from_jsonreply(json_data)
             if sensordata:
                 self.sensordata = sensordata
