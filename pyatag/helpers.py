@@ -13,7 +13,7 @@ from .const import (REQUEST_INFO, SENSOR_VALUES, BOILER_STATUS,
 
 MAC = 'mac'
 HOSTNAME = 'hostname'
-MAIL = 'email'
+MAIL = 'mail'
 URL = 'url'
 HOST = 'host'
 PORT = 'port'
