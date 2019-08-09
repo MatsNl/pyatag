@@ -79,7 +79,7 @@ def int_to_binary(worker):
 
 
 class HttpConnector:
-    """HTTP connector to Bosch thermostat."""
+    """HTTP connector to ATAG thermostat."""
 
     def __init__(self, hostdata, websession):
         """Init of HTTP connector."""
