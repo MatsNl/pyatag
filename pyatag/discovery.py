@@ -33,6 +33,3 @@ async def discover_atag():
         trans.close()
         raise RequestError('Host discovery failed')
     return host_ip, device_id
-
-# To dry run / test
-# asyncio.get_event_loop().run_until_complete(discover_atag())

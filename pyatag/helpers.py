@@ -15,6 +15,10 @@ MAC = 'mac'
 HOSTNAME = 'hostname'
 MAIL = 'email'
 URL = 'url'
+HOST = 'host'
+PORT = 'port'
+INTERFACE = 'interface'
+DEVICE = 'device'
 
 MSG_TO_PATH = {
     'update_message': 'update',
@@ -71,7 +75,8 @@ def get_state_from_worker(key, worker):
         return [worker, int_to_binary(worker)]
     if worker in SENSOR_VALUES[key]:
         return SENSOR_VALUES[key][worker]
-    return worker # not yet figured out what it means
+    return worker  # not yet figured out what it means
+
 
 def int_to_binary(worker):
     """Returns binary representation of int (for certain status/config values)."""
@@ -100,9 +105,9 @@ class HttpConnector:
                 data = await req.text()
                 json_result = json.loads(data)
                 return json_result
-        except (client_exceptions.ClientError,
+        except (client_exceptions.ClientError, ConnectionResetError,
                 client_exceptions.ClientConnectorError, asyncio.TimeoutError) as err:
-            raise ResponseError("Error putting data Atag: {}".format(err))
+            raise ResponseError(err)
         except json.JSONDecodeError as err:
             raise ResponseError(
                 "Unable to decode Json response: {}".format(err))
@@ -114,13 +119,6 @@ class HttpConnector:
     async def async_close(self):
         """Close the connection"""
         await self._websession.close()
-
-
-HOST = 'host'
-PORT = 'port'
-MAIL = 'mail'
-INTERFACE = 'interface'
-DEVICE = 'device'
 
 
 class HostData:
