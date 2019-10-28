@@ -17,8 +17,8 @@ DEFAULT_MAX_TEMP = 21
 REQUEST_INFO = 71
 
 HTTP_HEADER = {
-    'Content-type': 'applicaton/x-www-form-urlencoded;charset=UTF-8',
-    'Connection': 'Close',
+    'Content-type': 'applicaton/json;charset=UTF-8',
+    'Connection': 'keep-alive',
     'User-Agent': 'Mozilla/5.0 (compatible; AtagOneAPI/x; http://atag.one/)'
 }
 
