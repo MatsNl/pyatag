@@ -161,7 +161,7 @@ class HostData:
         }
         self.retrieve_msg = json_payload
 
-    def set_pair_msg(self):
+    def set_pair_msg(self, hass=True):
         """Get and store the constant pairing payload."""
 
         json_payload = {
@@ -176,13 +176,14 @@ class HostData:
                         {
                             "user_account": self.email,
                             "mac_address": self.mac,
-                            "device_name": self.hostname,
+                            "device_name": self.hostname if not hass else 'HomeAssistant',
                             "account_type": 1
                         }
                     ]
                 }
             }
         }
+
         self.pair_msg = json_payload
 
     def get_update_msg(self, **kwargs):
