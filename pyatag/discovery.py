@@ -1,6 +1,7 @@
 """Automatic discovery of ATAG Thermostat on LAN."""
 import asyncio
 from .helpers import RequestError
+
 ATAG_UDP_PORT = 11000
 LOCALHOST = '0.0.0.0'
 

@@ -2,30 +2,38 @@
 
 from datetime import datetime, timezone, timedelta
 from numbers import Number
+import logging
 import json
+import re
+import uuid
 
 import asyncio
 from aiohttp import client_exceptions
 from .errors import RequestError, ResponseError
-from .const import (REQUEST_INFO, SENSOR_VALUES, BOILER_STATUS,
-                    DEFAULT_TIMEOUT, DETAILS, REPORT, CONTROLS,
-                    HTTP_HEADER)
+from .const import (
+    REQUEST_INFO,
+    SENSOR_VALUES,
+    BOILER_STATUS,
+    DEFAULT_TIMEOUT,
+    DETAILS,
+    REPORT,
+    CONTROLS,
+    HTTP_HEADER,
+)
 
-MAC = 'mac'
-HOSTNAME = 'hostname'
-MAIL = 'mail'
-URL = 'url'
-HOST = 'host'
-PORT = 'port'
-INTERFACE = 'interface'
-DEVICE = 'device'
+MAC = "mac"
+HOSTNAME = "hostname"
+MAIL = "mail"
+URL = "url"
+HOST = "host"
+PORT = "port"
+INTERFACE = "interface"
+DEVICE = "device"
 
-MSG_TO_PATH = {
-    'update_message': 'update',
-    'retrieve_message': 'retrieve',
-    'pair_message': 'pair'
-}
-RETRIEVE_REPLY = 'retrieve_reply'
+RETRIEVE_REPLY = "retrieve_reply"
+
+LOCALTZ = datetime.now().astimezone().tzinfo
+_LOGGER = logging.getLogger(__name__)
 
 
 def get_data_from_jsonreply(json_response):
@@ -35,7 +43,7 @@ def get_data_from_jsonreply(json_response):
         _reply = json_response[RETRIEVE_REPLY]
         _reply[DETAILS] = _reply[REPORT][DETAILS]
         for group in _reply.keys():
-            if group in ['seqnr', 'acc_status']:
+            if group in ["seqnr", "acc_status"]:
                 continue
             for key in _reply[group]:
                 if key == DETAILS:
@@ -56,7 +64,7 @@ def get_data_from_jsonreply(json_response):
 
 def check_reply(json_reply):
     """reutrn the account status in an atag reply."""
-    return json_reply[list(json_reply.keys())[0]]['acc_status']
+    return json_reply[list(json_reply.keys())[0]]["acc_status"]
 
 
 def get_state_from_worker(key, worker):
@@ -67,10 +75,13 @@ def get_state_from_worker(key, worker):
     Time based on seconds from 2000 (UTC).
     """
     if key == BOILER_STATUS:
-        return SENSOR_VALUES[BOILER_STATUS][worker & 14]
-    if SENSOR_VALUES[key] == 'time':
-        return datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
-    if SENSOR_VALUES[key] == 'int':
+        return list("{0:b}".format(worker & 14))[1:3]
+        # return SENSOR_VALUES[BOILER_STATUS][worker & 14]
+    if SENSOR_VALUES[key] == "time":
+        return (
+            datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
+        ).astimezone(tz=LOCALTZ)
+    if SENSOR_VALUES[key] == "int":
         # not yet decoded integer values
         return [worker, int_to_binary(worker)]
     if worker in SENSOR_VALUES[key]:
@@ -80,37 +91,44 @@ def get_state_from_worker(key, worker):
 
 def int_to_binary(worker):
     """Returns binary representation of int (for certain status/config values)."""
-    return '{0:b}'.format(worker)
+    return "{0:b}".format(worker)
 
 
 class HttpConnector:
     """HTTP connector to ATAG thermostat."""
 
-    def __init__(self, hostdata, websession):
+    def __init__(self, hostconfig, session=None):
         """Init of HTTP connector."""
-        self.hostdata = hostdata
-        self._websession = websession
+        self.hostconfig = hostconfig
+        self._websession = session
         self._request_timeout = DEFAULT_TIMEOUT
 
     async def atag_put(self, data):
         """Make a put request to the API."""
-        path = MSG_TO_PATH.get(list(data.keys())[0])
-        posturl = '{}{}'.format(self.hostdata.baseurl, path)
+        path = list(data)[0].split("_")[0]
+        posturl = "{}{}".format(self.hostconfig.baseurl, path)
+        _LOGGER.debug("Posting to %s", posturl)
         try:
             async with self._websession.put(
-                    posturl,
-                    json=data,
-                    headers=HTTP_HEADER,
-                    timeout=self._request_timeout) as req:
+                posturl,
+                json=data,
+                headers=self.hostconfig.http_header,
+                proxy=self.hostconfig.proxy,
+                # ssl=self.hostconfig.ssl,
+                timeout=self._request_timeout,
+            ) as req:
                 data = await req.text()
+                _LOGGER.debug("Received: %s", data)
                 json_result = json.loads(data)
                 return json_result
-        except (client_exceptions.ClientError, ConnectionResetError,
-                client_exceptions.ClientConnectorError, asyncio.TimeoutError) as err:
+        except (
+            client_exceptions.ClientError,
+            ConnectionResetError,
+            json.JSONDecodeError,
+            client_exceptions.ClientConnectorError,
+            asyncio.TimeoutError,
+        ) as err:
             raise ResponseError(err)
-        except json.JSONDecodeError as err:
-            raise ResponseError(
-                "Unable to decode Json response: {}".format(err))
 
     def set_timeout(self, timeout=DEFAULT_TIMEOUT):
         """Set timeout for API calls."""
@@ -121,91 +139,120 @@ class HttpConnector:
         await self._websession.close()
 
 
-class HostData:
+class HostConfig:
     """Connection info store."""
 
-    def __init__(self, host_config):
-        host = host_config[HOST]
-        port = host_config[PORT]
-        interface = host_config[INTERFACE]
-        mail = host_config[MAIL]
-        if host is None:
-            raise RequestError("Invalid/None host data provided")
-        import netifaces
-        import socket
-        self.email = mail
-        self.hostname = socket.gethostname()
-        self.baseurl = "http://{}:{}/".format(host, port)
-        if interface is None:
-            interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
-        try:
-            self.mac = netifaces.ifaddresses(interface)[
-                netifaces.AF_LINK][0]['addr'].upper()
-        except ValueError:
-            raise RequestError("Incorrect interface selected")
-        self.set_pair_msg()
-        self.set_retrieve_msg()
+    def __init__(
+        self, host=None, port=10000, mail=None, hostname='HomeAssistant', ssl=None, proxy=None
+    ):
 
-    def set_retrieve_msg(self):
+        self.host = host
+        self.port = port
+        self.mail = mail or ""
+        self.proxy = proxy
+        self._mac = ":".join(re.findall("..", "%012x" % uuid.getnode()))
+        self._ssl = ssl
+        self.http_header = HTTP_HEADER
+        self.hostname = hostname
+        self.set_pair_msg()
+        self.retrieve_msg = self.get_retrieve_msg()
+        if self.host:
+            self.update_params()
+        # self.http_header['Authorization'] = host_config.get('auth')
+
+    def update_params(self, host=None):
+        """Set or update the values that depend on host address"""
+        if host:
+            self.host = host
+        self.baseurl = "{}:{}/".format(self.host, self.port)
+        if not re.match(r"^https?:\/\/", self.baseurl):
+            prefix = "https://" if self._ssl else "http://"
+            self.baseurl = prefix + self.baseurl
+
+    def get_retrieve_msg(self, info=REQUEST_INFO):
         """Get and store the constant retrieve payload."""
 
         json_payload = {
             "retrieve_message": {
                 "seqnr": 1,
-                "account_auth": {
-                    'user_account': self.email,
-                    'mac_address': self.mac
-                },
-                "info": REQUEST_INFO
+                "account_auth": {"user_account": self.mail, "mac_address": self._mac},
+                "info": info,
             }
         }
-        self.retrieve_msg = json_payload
+        return json_payload
 
     def set_pair_msg(self):
         """Get and store the constant pairing payload."""
 
-        json_payload = {
+        msg = {
             "pair_message": {
                 "seqnr": 1,
-                "account_auth": {
-                    'user_account': self.email,
-                    'mac_address': self.mac
-                },
+                "account_auth": {"user_account": self.mail, "mac_address": self._mac},
                 "accounts": {
                     "entries": [
                         {
-                            "user_account": self.email,
-                            "mac_address": self.mac,
+                            "user_account": self.mail,
+                            "mac_address": self._mac,
                             "device_name": self.hostname,
-                            "account_type": 1
+                            "account_type": 1,
                         }
                     ]
-                }
+                },
             }
         }
-        self.pair_msg = json_payload
+        self.pair_msg = msg
 
     def get_update_msg(self, **kwargs):
         """Return the update payload for control input."""
-        for key, value in kwargs.items():
-            if not key in CONTROLS or not isinstance(value, Number):
-                raise RequestError(
-                    "Invalid values received: {}: {}".format(key, value))
+        for key, val in kwargs.items():
+            if not key in CONTROLS or not isinstance(val, Number):
+                raise RequestError("Invalid value for {}: {}".format(key, val))
 
         json_payload = {
-            'update_message': {
-                'seqnr': 1,
-                'account_auth': {
-                    'user_account': self.email,
-                    'mac_address': self.mac
-                },
-                'control': {
-                }
+            "update_message": {
+                "seqnr": 1,
+                "account_auth": {"user_account": self.mail, "mac_address": self._mac},
+                "control": {},
             }
         }
 
-        for key, value in kwargs.items():
-            json_payload['update_message']['control'][CONTROLS.get(
-                key)] = value
+        for key, val in kwargs.items():
+            json_payload["update_message"]["control"][CONTROLS[key]] = val
 
         return json_payload
+
+
+async def insert_in_db(data, sqlserver, loop=None):
+    """insert into atag mysql db"""
+    # import aiomysql
+    from .const import SQLTYPES
+
+    conn = await aiomysql.connect(loop=loop, **sqlserver)
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+
+        query = []
+        for key, val in data.items():
+
+            query.append(" ".join([key, SQLTYPES.get(type(val))]))
+        query = "".join(
+            [
+                "CREATE TABLE IF NOT EXISTS atag(",
+                ", ".join(query),
+                ", PRIMARY KEY (date_time))",
+            ]
+        )
+
+        await cur.execute(query)
+        await conn.commit()
+        insert_query = "INSERT INTO atag ({}) VALUES {}".format(
+            ", ".join(data.keys()), tuple(map(str, data.values()))
+        )
+        await cur.execute(insert_query)
+        await conn.commit()
+        # delete_rows = "DELETE FROM atag where date(date_time) < CURDATE()-7"
+        # await cur.execute(delete_rows)
+        # await conn.commit()
+
+    conn.close()
+    return

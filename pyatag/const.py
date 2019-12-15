@@ -1,5 +1,7 @@
 """Constants for ATAG API."""
 
+import datetime
+
 CONF_INTERFACE = 'interface'
 
 STATE_HEAT = 'heat'
@@ -17,8 +19,8 @@ DEFAULT_MAX_TEMP = 21
 REQUEST_INFO = 71
 
 HTTP_HEADER = {
-    'Content-type': 'applicaton/x-www-form-urlencoded;charset=UTF-8',
-    'Connection': 'Close',
+    'Content-type': 'applicaton/json;charset=UTF-8',
+    'Connection': 'keep-alive',
     'User-Agent': 'Mozilla/5.0 (compatible; AtagOneAPI/x; http://atag.one/)'
 }
 
@@ -156,7 +158,7 @@ WEATHER_STATES = {
 MODES = {STATE_MANUAL: 1, STATE_AUTO: 2, STATE_EXTEND: 4}
 INT_MODES = {v: k for k, v in MODES.items()}
 
-CH_CONTROLS = {'Thermostat': 0, 'Weather based': 1}
+CH_CONTROLS = {'heat': 0, 'auto': 1} # Non weather based and weather based respectively
 INT_CH_CONTROLS = {v: k for k, v in CH_CONTROLS.items()}
 
 SENSOR_VALUES = {
@@ -171,4 +173,14 @@ SENSOR_VALUES = {
     "ch_status": 'int',
     "dhw_status": 'int',
     "device_status": 'int'
+}
+
+SQLTYPES = {
+    float: 'FLOAT',
+    int: 'INT',
+    datetime.datetime: 'DATETIME',
+    str: 'TEXT',
+    list: 'TEXT',
+    dict: 'TEXT',
+    type(None): 'TEXT'
 }
