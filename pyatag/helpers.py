@@ -181,7 +181,7 @@ class HostConfig:
         }
         return json_payload
 
-    def set_pair_msg(self):
+    def set_pair_msg(self, hass=True):
         """Get and store the constant pairing payload."""
 
         msg = {
