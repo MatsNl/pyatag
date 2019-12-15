@@ -4,16 +4,15 @@ from distutils.core import setup
 setup(
     name='pyatag',         # How you named your package folder (MyLib)
     packages=['pyatag'],   # Chose the same as "name"
-    version='0.2.7.11',      # Start with a small number
+    version='0.2.8',      # Start with a small number
     license='MIT',
-    description='Connection to ATAG One Thermostat REST Api',
+    description='Connection to ATAG One Thermostat',
     author='Mats',                   # Type in your name
     author_email='mats.nelissen@gmail.com',      # Type in your E-Mail
     url='https://github.com/MatsNl/pyatag',
     install_requires=[
         'asyncio',
         'aiohttp',
-        'netifaces'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

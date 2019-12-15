@@ -6,19 +6,21 @@ Provides connection to ATAG One Thermostat REST API
 __all__ = ["pyatag"]
 
 from pytag.gateway import AtagDataStore
+from pyatag.helpers import insert_in_db
 '''
 import asyncio
-import pprint
-
+import json
+# import pprint
+import datetime
 
 async def test():
     """Test connection with imported TESTDATA dict"""
     from pyatag.gateway import AtagDataStore
     import aiohttp
-    from .input import TESTDATA
-    pretty = pprint.PrettyPrinter(indent=2)
+    from .input import TESTDATA, SQLSERVER
+    # pretty = pprint.PrettyPrinter(indent=2)
     async with aiohttp.ClientSession() as session:
-        atag = AtagDataStore(host=None,  # TESTDATA["_host"],
+        atag = AtagDataStore(host= TESTDATA["_host"],
                              port=TESTDATA["_port"],
                              # mail=None, # test with mail == None
                              mail=TESTDATA["_mail"],
@@ -26,10 +28,11 @@ async def test():
                              session=session)
         await atag.async_update()
         assert atag.paired
-        # print('sensordata:')
+        print(json.dumps(atag.sensordata, default=str))
         # print(await atag.async_set_atag(dhw_mode_temp=44))
-        pretty.pprint(atag.sensordata)
+        # print("INSERT INTO atag VALUES({})".format(list(atag.sensordata.values())))
         # print(await atag.async_set_atag(_target_mode="manual", _target_temp=13))
+        #await insert_in_db(atag.sensordata, SQLSERVER)
         return atag
 
 asyncio.get_event_loop().run_until_complete(test())

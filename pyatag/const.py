@@ -2,8 +2,6 @@
 
 import datetime
 
-CONF_INTERFACE = 'interface'
-
 STATE_HEAT = 'heat'
 STATE_ECO = 'eco'
 STATE_AUTO = 'auto'
@@ -13,7 +11,7 @@ STATE_OFF = 'off'
 
 DEFAULT_TIMEOUT = 15
 DEFAULT_PORT = 10000
-DEFAULT_SCAN_INTERVAL = 120
+DEFAULT_SCAN_INTERVAL = 30
 DEFAULT_MIN_TEMP = 12
 DEFAULT_MAX_TEMP = 21
 REQUEST_INFO = 71
@@ -32,11 +30,11 @@ CH_MIN_TEMP = 'min_temp'
 CH_OPERATION_LIST = 'operation_list'
 CH_OPERATION_MODE = 'operation_mode'
 CH_TEMPERATURE = 'temperature'
-CH_OPERATION_CONTROL = 'ch_control_mode' # TBD HA
-CH_MODE_DURATION = 'ch_mode_duration' # TBD HA
-CH_HOLD_DURATION = 'extend_duration' # TBD HA
-VACATION = 'vacation_duration' # TBD HA
-FIREPLACE_DURATION = 'fireplace_duration' # TBD HA
+CH_OPERATION_CONTROL = 'ch_control_mode'  # TBD HA
+CH_MODE_DURATION = 'ch_mode_duration'  # TBD HA
+CH_HOLD_DURATION = 'extend_duration'  # TBD HA
+VACATION = 'vacation_duration'  # TBD HA
+FIREPLACE_DURATION = 'fireplace_duration'  # TBD HA
 REPORT_TIME = 'report_time'
 BOILER_STATUS = 'boiler_status'
 BOILER_CONF = 'boiler_config'
@@ -44,9 +42,9 @@ BOILER_CONF = 'boiler_config'
 # DHW constants
 DHW_STATE = "dhw_status"
 DHW_CURRENT_TEMPERATURE = 'dhw_water_temp'
-DHW_TEMPERATURE = 'dhw_temp_setp' # TBD HA
-DHW_OPERATION_MODE = "dhw_mode" # TBD HA
-DHW_MODE_TEMPERATURE = 'dhw_mode_temp' # TBD HA
+DHW_TEMPERATURE = 'dhw_temp_setp'  # TBD HA
+DHW_OPERATION_MODE = "dhw_mode"  # TBD HA
+DHW_MODE_TEMPERATURE = 'dhw_mode_temp'  # TBD HA
 
 STATUS = 'status'
 REPORT = 'report'
@@ -67,7 +65,7 @@ CONTROLS = {
     VACATION: "vacation_duration",
     DHW_TEMPERATURE: "dhw_temp_setp",
     DHW_STATE: "dhw_status",
-    DHW_OPERATION_MODE:"dhw_mode",
+    DHW_OPERATION_MODE: "dhw_mode",
     DHW_MODE_TEMPERATURE: "dhw_mode_temp",
     WEATHER_STATUS: 'weather_status',
     WEATHER_CURRENT_TEMPERATURE: 'weather_temp'
@@ -158,7 +156,8 @@ WEATHER_STATES = {
 MODES = {STATE_MANUAL: 1, STATE_AUTO: 2, STATE_EXTEND: 4}
 INT_MODES = {v: k for k, v in MODES.items()}
 
-CH_CONTROLS = {'heat': 0, 'auto': 1} # Non weather based and weather based respectively
+# Non weather based and weather based respectively
+CH_CONTROLS = {'heat': 0, 'auto': 1}
 INT_CH_CONTROLS = {v: k for k, v in CH_CONTROLS.items()}
 
 SENSOR_VALUES = {

@@ -27,7 +27,6 @@ MAIL = "mail"
 URL = "url"
 HOST = "host"
 PORT = "port"
-INTERFACE = "interface"
 DEVICE = "device"
 
 RETRIEVE_REPLY = "retrieve_reply"
@@ -79,7 +78,8 @@ def get_state_from_worker(key, worker):
         # return SENSOR_VALUES[BOILER_STATUS][worker & 14]
     if SENSOR_VALUES[key] == "time":
         return (
-            datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
+            datetime(2000, 1, 1, tzinfo=timezone.utc) +
+            timedelta(seconds=worker)
         ).astimezone(tz=LOCALTZ)
     if SENSOR_VALUES[key] == "int":
         # not yet decoded integer values
@@ -222,37 +222,37 @@ class HostConfig:
         return json_payload
 
 
-async def insert_in_db(data, sqlserver, loop=None):
-    """insert into atag mysql db"""
-    # import aiomysql
-    from .const import SQLTYPES
+# async def insert_in_db(data, sqlserver, loop=None):
+#    """insert into atag mysql db"""
+#    # import aiomysql
+#    from .const import SQLTYPES
 
-    conn = await aiomysql.connect(loop=loop, **sqlserver)
-    cur = await conn.cursor()
-    async with conn.cursor() as cur:
+#    conn = await aiomysql.connect(loop=loop, **sqlserver)
+#    cur = await conn.cursor()
+#    async with conn.cursor() as cur:
 
-        query = []
-        for key, val in data.items():
+#        query = []
+#        for key, val in data.items():
 
-            query.append(" ".join([key, SQLTYPES.get(type(val))]))
-        query = "".join(
-            [
-                "CREATE TABLE IF NOT EXISTS atag(",
-                ", ".join(query),
-                ", PRIMARY KEY (date_time))",
-            ]
-        )
+#            query.append(" ".join([key, SQLTYPES.get(type(val))]))
+#        query = "".join(
+#            [
+#                "CREATE TABLE IF NOT EXISTS atag(",
+#                ", ".join(query),
+#                ", PRIMARY KEY (date_time))",
+#            ]
+#        )
 
-        await cur.execute(query)
-        await conn.commit()
-        insert_query = "INSERT INTO atag ({}) VALUES {}".format(
-            ", ".join(data.keys()), tuple(map(str, data.values()))
-        )
-        await cur.execute(insert_query)
-        await conn.commit()
-        # delete_rows = "DELETE FROM atag where date(date_time) < CURDATE()-7"
-        # await cur.execute(delete_rows)
-        # await conn.commit()
+#        await cur.execute(query)
+#        await conn.commit()
+#        insert_query = "INSERT INTO atag ({}) VALUES {}".format(
+#            ", ".join(data.keys()), tuple(map(str, data.values()))
+#        )
+#        await cur.execute(insert_query)
+#        await conn.commit()
+#        # delete_rows = "DELETE FROM atag where date(date_time) < CURDATE()-7"
+#        # await cur.execute(delete_rows)
+#        # await conn.commit()
 
-    conn.close()
-    return
+#    conn.close()
+#    return

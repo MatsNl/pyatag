@@ -9,6 +9,7 @@ from pytag.gateway import AtagDataStore
 '''
 import asyncio
 from contextlib import suppress
+#from tests.test import insert_in_db
 # import pprint
 
 
@@ -16,23 +17,23 @@ async def test():
     """Test connection with imported TESTDATA dict"""
     from pyatag.gateway import AtagDataStore
     import aiohttp
-    from .input import TESTDATA
+    from tests.input import TESTDATA, SQLSERVER
     # pretty = pprint.PrettyPrinter(indent=2)
     async with aiohttp.ClientSession() as session:
-        atag = AtagDataStore(host='192.168.1.3',  # TESTDATA["_host"],
+        atag = AtagDataStore(host=TESTDATA["_host"],
                              port=TESTDATA["_port"],
                              # mail=None, # test with mail == None
                              mail=TESTDATA["_mail"],
                              interface=None,  # TESTDATA["_interface"],
                              session=session)
-
+        print("Starting loop")
+        print(atag.sensordata)
         while True:
-            print("starting loop")
             await atag.async_update()
-            print('updated')
+            print('Updated at: {}'.format(atag.sensordata['date_time']))
             assert atag.paired
-            print(atag.sensordata.get('date_time'))
-            print(atag.session.closed)
+            await insert_in_db(atag.sensordata, SQLSERVER, LOOP)
+
             await asyncio.sleep(3)
 
 
