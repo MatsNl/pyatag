@@ -73,14 +73,14 @@ class AtagDataStore:
     @property
     def cv_status(self):
         """Return boolean indicator for heating for CV"""
-        if self.sensordata.get("boilerstatus") is not None:
-            return self.sensordata.get("boilerstatus")[1] == 1
+        if self.sensordata.get("boiler_status") is not None:
+            return self.sensordata.get("boiler_status")[1] == 1
 
     @property
     def dhw_status(self):
         """Return boolean indicator for heating for DHW"""
-        if self.sensordata.get("boilerstatus") is not None:
-            return self.sensordata.get("boilerstatus")[0] == 1
+        if self.sensordata.get("boiler_status") is not None:
+            return self.sensordata.get("boiler_status")[0] == 1
 
     @property
     def hvac_mode(self):
