@@ -5,6 +5,7 @@ import asyncio
 from aiohttp import ClientSession
 from .helpers import HostConfig, HttpConnector, get_data_from_jsonreply, check_reply
 from .errors import ResponseError, RequestError
+from .const import BOILER_STATUS
 
 _LOGGER = logging.getLogger(__name__)
 MINTIMEBETWEENCALLS = 5  # Time in seconds
@@ -25,6 +26,7 @@ class AtagDataStore:
         ssl=None,
         proxy=None,
         paired=False,
+        **kwargs
     ):
 
         self._initialized = False
@@ -33,8 +35,12 @@ class AtagDataStore:
         self.connection = None
         self.sensordata = {}
         self._session = session
+        mail = mail or kwargs.get("email")
         self.config = HostConfig(host, port, mail, hostname, ssl, proxy)
-        self._last_api_call = datetime.datetime(1970, 1, 1, 0, 0, 0).astimezone()
+        self._last_api_call = (
+            datetime.datetime(1970, 1, 1, 0, 0, 0).astimezone(),
+            None,
+        )
         self._target_temperature = None
         self._dhw_target_temperature = None
         self._hvac_mode = None
@@ -71,16 +77,24 @@ class AtagDataStore:
         self._initialized = True
 
     @property
+    def burner_status(self):
+        """Returns a tuple: boolean for burning and percentage for modulation"""
+        if isinstance(self.sensordata.get(BOILER_STATUS), list):
+           if self.sensordata[BOILER_STATUS][0]==1:
+                return (True, self.sensordata.get("rel_mod_level"))
+        return (False, 0)
+
+    @property
     def cv_status(self):
         """Return boolean indicator for heating for CV"""
-        if self.sensordata.get("boiler_status") is not None:
-            return self.sensordata.get("boiler_status")[1] == 1
+        if self.burner_status:
+            return self.sensordata[BOILER_STATUS][2] == 1
 
     @property
     def dhw_status(self):
         """Return boolean indicator for heating for DHW"""
-        if self.sensordata.get("boiler_status") is not None:
-            return self.sensordata.get("boiler_status")[0] == 1
+        if self.burner_status:
+            return self.sensordata[BOILER_STATUS][1] == 1
 
     @property
     def hvac_mode(self):
@@ -88,7 +102,10 @@ class AtagDataStore:
         :param auto: Returned when ATAG is set to weather based.
         :param heat: Returned when set to regular mode.
         """
-        if self.sensordata.get("report_time") < self._last_api_call:
+        if (
+            self._last_api_call[1] == "ch_control_mode"
+            and self.sensordata.get("report_time") < self._last_api_call[0]
+        ):
             return self._hvac_mode
         return self.sensordata.get("ch_control_mode")
 
@@ -116,7 +133,10 @@ class AtagDataStore:
     @property
     def target_temperature(self):
         """Return target CV temperature"""
-        if self.sensordata.get("report_time") < self._last_api_call:
+        if (
+            self._last_api_call[1] == "temperature"
+            and self.sensordata.get("report_time") < self._last_api_call[0]
+        ):
             return self._target_temperature
         return self.sensordata.get("ch_mode_temp")
 
@@ -150,12 +170,14 @@ class AtagDataStore:
     @property
     def dhw_target_temperature(self):
         """Return dhw target temperature"""
-        if self.sensordata.get("report_time") < self._last_api_call:
-            return self._dhw_target_temperature
 
         if self.dhw_status:
             return self.sensordata.get("dhw_temp_setp")
-
+        if (
+            self._last_api_call[1] == "dhw_mode_temp"
+            and self.sensordata.get("report_time") < self._last_api_call[0]
+        ):
+            return self._dhw_target_temperature
         return self.sensordata.get("dhw_mode_temp") % 150
 
     async def dhw_set_temp(self, target: float):
@@ -203,7 +225,10 @@ class AtagDataStore:
         payload = self.config.get_update_msg(**kwargs)
         await self.can_call()
         try:
-            self._last_api_call = datetime.datetime.now().astimezone()
+            self._last_api_call = (
+                datetime.datetime.now().astimezone(),
+                list(kwargs)[0],
+            )
             json_data = await self.connection.atag_put(payload)
             _LOGGER.debug("Update reply: %s", json_data)
             return check_reply(json_data) == 2
@@ -219,7 +244,7 @@ class AtagDataStore:
             self.initialized = True
         await self.can_call()
         try:
-            self._last_api_call = datetime.datetime.now().astimezone()
+            self._last_api_call = (datetime.datetime.now().astimezone(), None)
             json_data = await self.connection.atag_put(self.config.pair_msg)
             status = check_reply(json_data)
             if status == 2 and self.device is not None:
@@ -244,10 +269,9 @@ class AtagDataStore:
     async def can_call(self):
         """Sleep until next API call can be made, to avoid device overload"""
         slept = min(
-            datetime.datetime.now().astimezone() - self._last_api_call,
+            datetime.datetime.now().astimezone() - self._last_api_call[0],
             datetime.timedelta(seconds=MINTIMEBETWEENCALLS),
         ).seconds
         await asyncio.sleep(MINTIMEBETWEENCALLS - slept)
 
         return True
-

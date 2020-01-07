@@ -40,13 +40,11 @@ def get_data_from_jsonreply(json_response):
     result = {}
     try:
         _reply = json_response[RETRIEVE_REPLY]
-        _reply[DETAILS] = _reply[REPORT][DETAILS]
+        _reply[DETAILS] = _reply[REPORT].pop(DETAILS)
         for group in _reply.keys():
             if group in ["seqnr", "acc_status"]:
                 continue
             for key in _reply[group]:
-                if key == DETAILS:
-                    break
                 if key in SENSOR_VALUES:
                     worker = int(_reply[group][key])
                     result[key] = get_state_from_worker(key, worker)
@@ -74,12 +72,10 @@ def get_state_from_worker(key, worker):
     Time based on seconds from 2000 (UTC).
     """
     if key == BOILER_STATUS:
-        return list("{0:b}".format(worker & 14))[1:3]
-        # return SENSOR_VALUES[BOILER_STATUS][worker & 14]
+        return list(map(int,list("{0:04b}".format(worker & 14))))[0:3]
     if SENSOR_VALUES[key] == "time":
         return (
-            datetime(2000, 1, 1, tzinfo=timezone.utc) +
-            timedelta(seconds=worker)
+            datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
         ).astimezone(tz=LOCALTZ)
     if SENSOR_VALUES[key] == "int":
         # not yet decoded integer values
@@ -143,11 +139,17 @@ class HostConfig:
     """Connection info store."""
 
     def __init__(
-        self, host=None, port=10000, mail=None, hostname='HomeAssistant', ssl=None, proxy=None
+        self,
+        host=None,
+        port=10000,
+        mail=None,
+        hostname="HomeAssistant",
+        ssl=None,
+        proxy=None,
     ):
 
         self.host = host
-        self.port = port
+        self.port = port or 10000
         self.mail = mail or ""
         self.proxy = proxy
         self._mac = ":".join(re.findall("..", "%012x" % uuid.getnode()))
@@ -221,38 +223,3 @@ class HostConfig:
 
         return json_payload
 
-
-# async def insert_in_db(data, sqlserver, loop=None):
-#    """insert into atag mysql db"""
-#    # import aiomysql
-#    from .const import SQLTYPES
-
-#    conn = await aiomysql.connect(loop=loop, **sqlserver)
-#    cur = await conn.cursor()
-#    async with conn.cursor() as cur:
-
-#        query = []
-#        for key, val in data.items():
-
-#            query.append(" ".join([key, SQLTYPES.get(type(val))]))
-#        query = "".join(
-#            [
-#                "CREATE TABLE IF NOT EXISTS atag(",
-#                ", ".join(query),
-#                ", PRIMARY KEY (date_time))",
-#            ]
-#        )
-
-#        await cur.execute(query)
-#        await conn.commit()
-#        insert_query = "INSERT INTO atag ({}) VALUES {}".format(
-#            ", ".join(data.keys()), tuple(map(str, data.values()))
-#        )
-#        await cur.execute(insert_query)
-#        await conn.commit()
-#        # delete_rows = "DELETE FROM atag where date(date_time) < CURDATE()-7"
-#        # await cur.execute(delete_rows)
-#        # await conn.commit()
-
-#    conn.close()
-#    return
