@@ -4,3 +4,4 @@ update
 .vscode/launch.json
 .DS_Store
 pyatag.egg-info
+dist/*

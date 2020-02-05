@@ -89,31 +89,40 @@ REPORT_STRUCTURE = {
               "weather_status", "vacation_duration", "extend_duration", "fireplace_duration"]
 }
 SENSOR_TYPES = {
-    'device_id': ['One ID', '', 'mdi:account-card-details-outline', 'device_id'],
-    'device_status': ['One status', '', 'mdi:account-card-details-outline', 'device_status'],
-    'connection_status': ['Connection', '', 'mdi:wifi', 'connection_status'],
-    'date_time': ['Datetime', '', 'mdi:calendar-clock', 'date_time'],
-    CH_CURRENT_TEMPERATURE: ['Current Temperature', '°C', 'mdi:thermometer', 'room_temp'],
-    'outside_temp': ['Outside Temp', '°C', 'mdi:thermometer', 'outside_temp'],
-    'outside_temp_avg': ['Average Outside Temperature', '°C', 'mdi:thermometer', 'tout_avg'],
-    WEATHER_STATUS: ['Weather Status', '', 'mdi:white-balance-sunny', 'weather_status'],
-    'pcb_temp': ['PCB Temperature', '°C', 'mdi:thermometer', 'pcb_temp'],
-    CH_TEMPERATURE: ['Target Temperature', '°C', 'mdi:thermometer', 'shown_set_temp'],
-    CH_OPERATION_MODE: ['Operation Mode', '', 'mdi:settings', 'ch_mode'],
-    'ch_water_pressure': ['Central Heating Pressure', 'Bar', 'mdi:gauge', 'ch_water_pres'],
-    'ch_water_temp': ['CH Water Temperature', '°C', 'mdi:thermometer', 'ch_water_temp'],
-    'ch_return_temp': ['CH Return Temperature', '°C', 'mdi:thermometer', 'ch_return_temp'],
-    DHW_CURRENT_TEMPERATURE: ['Hot Water Temp', '°C', 'mdi:thermometer', 'dhw_water_temp'],
-    'dhw_water_pres': ['Hot Water Pressure', 'Bar', 'mdi:gauge', 'dhw_water_pres'],
-    'dhw_flow_rate': ['Hot Water Flow Rate', '?', 'mdi:gauge', 'dhw_flow_rate'],
-    BOILER_STATUS: ['Boiler Status', '', 'mdi:flash', 'boiler_status'],
-    BOILER_CONF: ['Boiler Config', '', 'mdi:flash', 'boiler_config'],
-    'burning_hours': ['Burning Hours', 'h', 'mdi:fire', 'burning_hours'],
-    'voltage': ['Voltage', 'V', 'mdi:flash', 'voltage'],
-    'current': ['Current', 'mA', 'mdi:flash-auto', 'current'],
-    'flame_level': ['Flame', '%', 'mdi:fire', 'rel_mod_level'],
-    REPORT_TIME: ['Report Time', '', 'mdi:clock', 'report_time'],
+    'device_id': {'type': 'One ID'	, 'unit': 	 ''	, 'icon': 	 'mdi:account-card-details-outline'	, 'datafield': 	 'device_id'},
+    'device_status': {'type': 'One status'	, 'unit': 	 ''	, 'icon': 	 'mdi:account-card-details-outline'	, 'datafield': 	 'device_status'},
+    'connection_status': {'type': 'Connection'	, 'unit': 	 ''	, 'icon': 	 'mdi:wifi'	, 'datafield': 	 'connection_status'},
+    'date_time': {'type': 'Datetime'	, 'unit': 	 ''	, 'icon': 	 'mdi:calendar-clock'	, 'datafield': 	 'date_time'},
+    CH_CURRENT_TEMPERATURE: {'type': 'Current Temperature'	, 'unit': 	 '°C'	,
+                             'icon': 	 'mdi:thermometer'	, 'datafield': 	 'room_temp'},
+    'outside_temp': {'type': 'Outside Temp'	, 'unit': 	 '°C'	, 'icon': 	 'mdi:thermometer'	, 'datafield': 	 'outside_temp'},
+    'outside_temp_avg': {'type': 'Average Outside Temperature'	, 'unit': 	 '°C'	, 'icon': 	 'mdi:thermometer'	, 'datafield': 	 'tout_avg'},
+    WEATHER_STATUS: {'type': 'Weather Status'	, 'unit': 	 ''	,
+                     'icon': 	 'mdi:white-balance-sunny'	, 'datafield': 	 'weather_status'},
+    'pcb_temp': {'type': 'PCB Temperature'	, 'unit': 	 '°C'	, 'icon': 	 'mdi:thermometer'	, 'datafield': 	 'pcb_temp'},
+    CH_TEMPERATURE: {'type': 'Target Temperature'	, 'unit': 	 '°C',
+                     'icon': 	 'mdi:thermometer'	, 'datafield': 	 'shown_set_temp'},
+    CH_OPERATION_MODE: {'type': 'Operation Mode'	, 'unit': 	 ''	,
+                        'icon': 	 'mdi:settings'	, 'datafield': 	 'ch_mode'},
+    'ch_water_pressure': {'type': 'Central Heating Pressure'	, 'unit': 	 'Bar'	, 'icon': 	 'mdi:gauge'	, 'datafield': 	 'ch_water_pres'},
+    'ch_water_temp': {'type': 'CH Water Temperature'	, 'unit': 	 '°C'	, 'icon': 	 'mdi:thermometer'	, 'datafield': 	 'ch_water_temp'},
+    'ch_return_temp': {'type': 'CH Return Temperature'	, 'unit': 	 '°C'	, 'icon': 	 'mdi:thermometer'	, 'datafield': 	 'ch_return_temp'},
+    DHW_CURRENT_TEMPERATURE: {'type': 'Hot Water Temp'	, 'unit': 	 '°C'	,
+                              'icon': 	 'mdi:thermometer'	, 'datafield': 	 'dhw_water_temp'},
+    'dhw_water_pres': {'type': 'Hot Water Pressure'	, 'unit': 	 'Bar'	, 'icon': 	 'mdi:gauge'	, 'datafield': 	 'dhw_water_pres'},
+    'dhw_flow_rate': {'type': 'Hot Water Flow Rate'	, 'unit': 	 '?'	, 'icon': 	 'mdi:gauge'	, 'datafield': 	 'dhw_flow_rate'},
+    BOILER_STATUS: {'type': 'Boiler Status'	, 'unit': 	 ''	,
+                    'icon': 	 'mdi:flash'	, 'datafield': 	 'boiler_status'},
+    BOILER_CONF: {'type': 'Boiler Config'	, 'unit': 	 ''	,
+                  'icon': 	 'mdi:flash'	, 'datafield': 	 'boiler_config'},
+    'burning_hours': {'type': 'Burning Hours'	, 'unit': 	 'h'	, 'icon': 	 'mdi:fire'	, 'datafield': 	 'burning_hours'},
+    'voltage': {'type': 'Voltage'	, 'unit': 	 'V'	, 'icon': 	 'mdi:flash'	, 'datafield': 	 'voltage'},
+    'current': {'type': 'Current'	, 'unit': 	 'mA'	, 'icon': 	 'mdi:flash-auto'	, 'datafield': 	 'current'},
+    'flame_level': {'type': 'Flame'	, 'unit': 	 '%'	, 'icon': 	 'mdi:fire'	, 'datafield': 	 'rel_mod_level'},
+    REPORT_TIME: {'type': 'Report Time'	, 'unit': 	 ''	,
+                  'icon': 	 'mdi:clock'	, 'datafield': 	 'report_time'},
 }
+
 
 for i in CONTROLS:
     if i not in SENSOR_TYPES:
@@ -133,32 +142,35 @@ BOILER_STATES = {
 }
 
 CONNECTION_STATES = {
-    23: "Connected to BCU"
+    23: {'state': "Connected to BCU"}
 }
 
 WEATHER_STATES = {
-    0: ['Sunny', 'mdi:weather-sunny'],
-    1: ['Clear', 'mdi:weather-night'],
-    2: ['Rainy', 'mdi:weather-rainy'],
-    3: ['Snowy', 'mdi:weather-snowy'],  # Not sure, Atag icons unclear
-    4: ['Haily', 'mdi:weather-hail'],  # Not sure, Atag icons unclear
-    5: ['Windy', 'mdi:weather-windy'],
-    6: ['Misty', 'mdi:weather-fog'],
-    7: ['Cloudy', 'mdi:weather-cloudy'],
-    8: ['Partly Sunny', 'mdi:weather-partlycloudy'],
-    9: ['Partly Cloudy', 'mdi:cloud'],  # Night with clouds..
-    10: ['Shower', 'mdi:weather-pouring'],  # Not sure, Atag icons unclear
-    11: ['Lightning', 'mdi:weather-lightning'],
-    12: ['Hurricane', 'mdi:weather-hurricane'],
-    13: ['Unknown', 'mdi:cloud-question']
+    0: {'state': 'Sunny', 'icon': 'mdi:weather-sunny'},
+    1: {'state': 'Clear', 'icon': 'mdi:weather-night'},
+    2: {'state': 'Rainy', 'icon': 'mdi:weather-rainy'},
+    # Not sure, Atag icons unclear
+    3: {'state': 'Snowy', 'icon': 'mdi:weather-snowy'},
+    # Not sure, Atag icons unclear
+    4: {'state': 'Haily', 'icon': 'mdi:weather-hail'},
+    5: {'state': 'Windy', 'icon': 'mdi:weather-windy'},
+    6: {'state': 'Misty', 'icon': 'mdi:weather-fog'},
+    7: {'state': 'Cloudy', 'icon':  'mdi:weather-cloudy'},
+    8: {'state': 'Partly Sunny', 'icon':  'mdi:weather-partlycloudy'},
+    9: {'state': 'Partly Cloudy', 'icon': 'mdi:cloud'},  # Night with clouds..
+    # Not sure, Atag icons unclear
+    10: {'state': 'Shower', 'icon': 'mdi:weather-pouring'},
+    11: {'state': 'Lightning', 'icon':  'mdi:weather-lightning'},
+    12: {'state': 'Hurricane', 'icon': 'mdi:weather-hurricane'},
+    13: {'state': 'Unknown', 'icon': 'mdi:cloud-question'}
 }
 
 MODES = {STATE_MANUAL: 1, STATE_AUTO: 2, STATE_EXTEND: 4}
-INT_MODES = {v: k for k, v in MODES.items()}
+INT_MODES = {v: {'state': k} for k, v in MODES.items()}
 
 # Non weather based and weather based respectively
 CH_CONTROLS = {'heat': 0, 'auto': 1}
-INT_CH_CONTROLS = {v: k for k, v in CH_CONTROLS.items()}
+INT_CH_CONTROLS = {v: {'state': k} for k, v in CH_CONTROLS.items()}
 
 SENSOR_VALUES = {
     "report_time": 'time',

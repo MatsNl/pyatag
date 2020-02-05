@@ -51,9 +51,9 @@ def get_data_from_jsonreply(json_response):
                 else:
                     res = _reply[group][key]
                     if isinstance(res, Number):
-                        result[key] = float(res)
+                        result[key] = {'state': float(res)}
                     else:
-                        result[key] = res
+                        result[key] = {'state': res}
     except KeyError as err:
         raise ResponseError("Invalid value {} for {}".format(err, group))
     return result
@@ -72,17 +72,18 @@ def get_state_from_worker(key, worker):
     Time based on seconds from 2000 (UTC).
     """
     if key == BOILER_STATUS:
-        return list(map(int,list("{0:04b}".format(worker & 14))))[0:3]
+        return {'state': list(map(int, list("{0:04b}".format(worker & 14))))[0:3]}  
     if SENSOR_VALUES[key] == "time":
-        return (
-            datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
-        ).astimezone(tz=LOCALTZ)
+        return {'state': (
+            datetime(2000, 1, 1, tzinfo=timezone.utc) +
+            timedelta(seconds=worker)
+        ).astimezone(tz=LOCALTZ)}
     if SENSOR_VALUES[key] == "int":
-        # not yet decoded integer values
-        return [worker, int_to_binary(worker)]
+        # TODO not yet decoded integer values
+        return {'state_orig': worker, 'state': int_to_binary(worker)}
     if worker in SENSOR_VALUES[key]:
         return SENSOR_VALUES[key][worker]
-    return worker  # not yet figured out what it means
+    return {'state': worker}  # not yet figured out what it means
 
 
 def int_to_binary(worker):
@@ -222,4 +223,3 @@ class HostConfig:
             json_payload["update_message"]["control"][CONTROLS[key]] = val
 
         return json_payload
-
