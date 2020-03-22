@@ -42,12 +42,12 @@ def discover_atag():
     import socket
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(30)
     sock.bind(("", 11000))
     try:
-        while True:
-            result = sock.recvfrom(37)
-            host_ip = result[1][0]
-            device_id = result[0].decode().split()[1]
+       result = sock.recvfrom(37)
+       host_ip = result[1][0]
+       device_id = result[0].decode().split()[1]
     except socket.timeout:
         pass
     except Exception as err:

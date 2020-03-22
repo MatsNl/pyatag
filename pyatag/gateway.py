@@ -38,7 +38,7 @@ class AtagDataStore:
         mail = mail or kwargs.get("email")
         self.config = HostConfig(host, port, mail, hostname, ssl, proxy)
         self._last_api_call = (
-            datetime.datetime(1970, 1, 1, 0, 0, 0).astimezone(),
+            datetime.datetime.now().astimezone(),
             None,
         )
         self._target_temperature = None
@@ -196,10 +196,10 @@ class AtagDataStore:
 
     async def async_host_search(self):
         """Atag Discovery in case no host provided."""
-        from .discovery import discover_atag
+        from .discovery import async_discover_atag
 
         _LOGGER.debug("No host provided, attempting discovery...")
-        host, device = await discover_atag()
+        host, device = await async_discover_atag()
         if host and device:
             self.config.host = host
             self._device = device

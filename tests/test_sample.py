@@ -1,3 +1,13 @@
+'''
+Test for basic ATAG ONE communication
+
+This tests the basic communication with the ATAG ONE thermostat. It autodiscovers the thermostat 
+and receives a report with all sensor information. 
+
+
+Note: If the discovery does not work, make sure that your firewall allows incoming connections on port 11000 on your local network.
+'''
+
 import asyncio
 from pprint import pprint
 import async_timeout
