@@ -38,7 +38,7 @@ class AtagDataStore:
         mail = mail or kwargs.get("email")
         self.config = HostConfig(host, port, mail, hostname, ssl, proxy)
         self._last_api_call = (
-            datetime.datetime.now().astimezone(),
+            datetime.datetime(1970,1,1,tzinfo = datetime.timezone.utc),
             None,
         )
         self._target_temperature = None
