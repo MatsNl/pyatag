@@ -132,12 +132,12 @@ REPORT_STRUCTURE_INV = {
     v: i for i in REPORT_STRUCTURE for v in REPORT_STRUCTURE[i]}
 
 BOILER_STATES = {
-    14: 'Heating CV & Water',
+    14: 'Heating CH & Water',
     12: 'Heating Water',
-    10: 'Heating CV',
+    10: 'Heating CH',
     8: 'Heating Boiler',
     4: 'Pumping Water',
-    2: 'Pumping CV',
+    2: 'Pumping CH',
     0: 'Idle'
 }
 

@@ -85,8 +85,8 @@ class AtagDataStore:
         return (False, 0)
 
     @property
-    def cv_status(self):
-        """Return boolean indicator for heating for CV"""
+    def ch_status(self):
+        """Return boolean indicator for heating for CH"""
         if self.burner_status:
             return self.sensordata[BOILER_STATUS]['state'][2] == 1
 
@@ -127,12 +127,12 @@ class AtagDataStore:
 
     @property
     def temperature(self):
-        """Return current CV temperature"""
+        """Return current room temperature"""
         return self.sensordata.get("room_temp").get('state')
 
     @property
     def target_temperature(self):
-        """Return target CV temperature"""
+        """Return target CH temperature"""
         if (
             self._last_api_call[1] == "temperature"
             and self.sensordata.get("report_time").get('state') < self._last_api_call[0]
@@ -141,7 +141,7 @@ class AtagDataStore:
         return self.sensordata.get("ch_mode_temp").get('state')
 
     async def set_temp(self, target: float):
-        """Set target CV temperature"""
+        """Set target CH temperature"""
         if target == self.target_temperature:
             return True
         try:
