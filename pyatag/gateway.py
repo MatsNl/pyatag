@@ -176,18 +176,18 @@ class AtagDataStore:
             return self.sensordata.get("dhw_temp_setp").get('state')
 
         if (
-            self._last_api_call[1] == "dhw_mode_temp"
+            self._last_api_call[1] == "dhw_temp_setp"
             and self.sensordata.get("report_time").get('state') < self._last_api_call[0]
         ):
             return self._dhw_target_temperature
-        return self.sensordata.get("dhw_mode_temp").get('state') % 150
+        return self.sensordata.get("dhw_temp_setp").get('state')
 
     async def dhw_set_temp(self, target: float):
         """Set dhw target temperature"""
         if target == self.dhw_target_temperature:
             return True
         try:
-            if await self.async_set_atag(dhw_target_temp=target):
+            if await self.async_set_atag(dhw_temp_setp=target):
                 self._dhw_target_temperature = target
                 return True
         except ResponseError as err:
