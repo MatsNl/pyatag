@@ -5,7 +5,7 @@ import asyncio
 from aiohttp import ClientSession
 from .helpers import HostConfig, HttpConnector, get_data_from_jsonreply, check_reply
 from .errors import ResponseError, RequestError
-from .const import BOILER_STATUS
+from .const import BOILER_STATUS, MODES
 
 _LOGGER = logging.getLogger(__name__)
 MINTIMEBETWEENCALLS = 5  # Time in seconds
@@ -38,12 +38,13 @@ class AtagDataStore:
         mail = mail or kwargs.get("email")
         self.config = HostConfig(host, port, mail, hostname, ssl, proxy)
         self._last_api_call = (
-            datetime.datetime(1970, 1, 1, 0, 0, 0).astimezone(),
+            datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc),
             None,
         )
         self._target_temperature = None
         self._dhw_target_temperature = None
         self._hvac_mode = None
+        self._hold_mode = None
         if self.config.host:
             self.initialized = True
 
@@ -55,7 +56,7 @@ class AtagDataStore:
     @property
     def apiversion(self):
         """Return api version reported by device"""
-        return self.sensordata.get("download_url").get('state').split("/")[-1]
+        return self.sensordata.get("download_url").get("state").split("/")[-1]
 
     @property
     def paired(self):
@@ -79,8 +80,8 @@ class AtagDataStore:
     @property
     def burner_status(self):
         """Returns a tuple: boolean for burning and percentage for modulation"""
-        if isinstance(self.sensordata.get(BOILER_STATUS).get('state'), list):
-           if self.sensordata[BOILER_STATUS]['state'][0]==1:
+        if isinstance(self.sensordata.get(BOILER_STATUS).get("state"), list):
+            if self.sensordata[BOILER_STATUS]["state"][0] == 1:
                 return (True, self.sensordata.get("rel_mod_level"))
         return (False, 0)
 
@@ -88,32 +89,26 @@ class AtagDataStore:
     def cv_status(self):
         """Return boolean indicator for heating for CV"""
         if self.burner_status:
-            return self.sensordata[BOILER_STATUS]['state'][2] == 1
+            return self.sensordata[BOILER_STATUS]["state"][2] == 1
 
     @property
     def dhw_status(self):
         """Return boolean indicator for heating for DHW"""
         if self.burner_status:
-            return self.sensordata[BOILER_STATUS]['state'][1] == 1
+            return self.sensordata[BOILER_STATUS]["state"][1] == 1
 
     @property
     def hvac_mode(self):
-        """Return the mode ATAG is operating in:
-        :param auto: Returned when ATAG is set to weather based.
-        :param heat: Returned when set to regular mode.
-        """
+        """Return the operating mode (Weather or Regular/Heat)"""
         if (
             self._last_api_call[1] == "ch_control_mode"
-            and self.sensordata.get("report_time").get('state') < self._last_api_call[0]
+            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
         ):
             return self._hvac_mode
-        return self.sensordata.get("ch_control_mode").get('state')
+        return self.sensordata.get("ch_control_mode").get("state")
 
     async def set_hvac_mode(self, mode: str) -> bool:
-        """Set the mode ATAG operates in:
-        :param auto: Returned when ATAG is set to weather based.
-        :param heat: Returned when set to regular mode.
-        """
+        """Set the operating mode (Weather or Regular/Heat) """
         if mode == self.hvac_mode:
             return True
         int_mode = 1 if mode == "auto" else 0
@@ -126,19 +121,52 @@ class AtagDataStore:
             return False
 
     @property
+    def hold_mode(self):
+        """Return the hold mode (Manual/Auto/Extend/Vacation/Fireplace)"""
+        if (
+            self._last_api_call[1] == "ch_mode"
+            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
+        ):
+            return self._hold_mode
+        return self.sensordata.get("ch_mode").get("state")
+
+    @property
+    def hold_mode_duration(self):
+        """Return remaining time on hold mode"""
+        if self.hold_mode == "extend":
+            seconds = self.sensordata.get("ch_mode_duration").get("state")
+            return datetime.timedelta(seconds=seconds)
+
+    async def set_hold_mode(self, mode: str, **kwargs) -> bool:
+        """Set the hold mode (Manual/Auto/Extend/Vacation/Fireplace) """
+        if mode == self.hold_mode:
+            return True
+        int_mode = MODES.get(mode)
+        if not int_mode:
+            _LOGGER.error("Received invalid mode: %s", mode)
+            return False
+        try:
+            if await self.async_set_atag(ch_mode=int_mode):
+                self._hold_mode = mode
+                return True
+        except ResponseError as err:
+            _LOGGER.error("Failed to update mode: %s", err)
+            return False
+
+    @property
     def temperature(self):
         """Return current CV temperature"""
-        return self.sensordata.get("room_temp").get('state')
+        return self.sensordata.get("room_temp").get("state")
 
     @property
     def target_temperature(self):
         """Return target CV temperature"""
         if (
             self._last_api_call[1] == "temperature"
-            and self.sensordata.get("report_time").get('state') < self._last_api_call[0]
+            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
         ):
             return self._target_temperature
-        return self.sensordata.get("ch_mode_temp").get('state')
+        return self.sensordata.get("ch_mode_temp").get("state")
 
     async def set_temp(self, target: float):
         """Set target CV temperature"""
@@ -155,32 +183,31 @@ class AtagDataStore:
     @property
     def dhw_temperature(self):
         """Return current dhw temperature"""
-        return self.sensordata.get("dhw_water_temp").get('state')
+        return self.sensordata.get("dhw_water_temp").get("state")
 
     @property
     def dhw_min_temp(self):
         """Return dhw min temperature"""
-        return self.sensordata.get("dhw_min_set").get('state')
+        return self.sensordata.get("dhw_min_set").get("state")
 
     @property
     def dhw_max_temp(self):
         """Return dhw max temperature"""
-        return self.sensordata.get("dhw_max_set").get('state')
-
+        return self.sensordata.get("dhw_max_set").get("state")
 
     @property
     def dhw_target_temperature(self):
         """Return dhw target temperature"""
 
         if self.dhw_status:
-            return self.sensordata.get("dhw_temp_setp").get('state')
+            return self.sensordata.get("dhw_temp_setp").get("state")
 
         if (
             self._last_api_call[1] == "dhw_mode_temp"
-            and self.sensordata.get("report_time").get('state') < self._last_api_call[0]
+            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
         ):
             return self._dhw_target_temperature
-        return self.sensordata.get("dhw_mode_temp").get('state') % 150
+        return self.sensordata.get("dhw_mode_temp").get("state") % 150
 
     async def dhw_set_temp(self, target: float):
         """Set dhw target temperature"""
