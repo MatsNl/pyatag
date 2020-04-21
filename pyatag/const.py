@@ -7,7 +7,7 @@ STATE_ECO = "eco"
 STATE_AUTO = "Auto"
 STATE_MANUAL = "Manual"
 STATE_EXTEND = "Extend"
-STATE_HOLIDAY = "holiday"
+STATE_HOLIDAY = "away"
 # STATE_FIREPLACE = 'fireplace'
 STATE_FIREPLACE = "boost"
 STATE_OFF = "off"
@@ -374,4 +374,3 @@ SQLTYPES = {
     dict: "TEXT",
     type(None): "TEXT",
 }
-
