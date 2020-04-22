@@ -74,11 +74,7 @@ def get_state_from_worker(key, worker):
     if key == BOILER_STATUS:
         return {"state": list(map(int, list("{0:04b}".format(worker & 14))))[0:3]}
     if SENSOR_VALUES[key] == "time":
-        return {
-            "state": (
-                datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=worker)
-            ).astimezone(tz=LOCALTZ)
-        }
+        return {"state": datetime(2000, 1, 1) + timedelta(seconds=worker)}
     if SENSOR_VALUES[key] == "int":
         # TODO not yet decoded integer values
         return {"state_orig": worker, "state": int_to_binary(worker)}

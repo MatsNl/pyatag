@@ -351,6 +351,8 @@ INT_MODES = {v: {"state": k} for k, v in MODES.items()}
 CH_CONTROLS = {"heat": 0, "auto": 1}
 INT_CH_CONTROLS = {v: {"state": k} for k, v in CH_CONTROLS.items()}
 
+TEMP_UNITS = {0: {"state": "°C"}, 1: {"state": "°F"}}
+
 SENSOR_VALUES = {
     "report_time": "time",
     "date_time": "time",
@@ -363,6 +365,7 @@ SENSOR_VALUES = {
     "ch_status": "int",
     "dhw_status": "int",
     "device_status": "int",
+    "temp_unit": TEMP_UNITS,
 }
 
 SQLTYPES = {

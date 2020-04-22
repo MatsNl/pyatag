@@ -78,6 +78,11 @@ class AtagDataStore:
         self._initialized = True
 
     @property
+    def temp_unit(self):
+        """Return temperature unit"""
+        return self.sensordata["temp_unit"]["state"]
+
+    @property
     def burner_status(self):
         """Returns a tuple: boolean for burning and percentage for modulation"""
         if isinstance(self.sensordata.get(BOILER_STATUS).get("state"), list):
