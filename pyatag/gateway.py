@@ -38,7 +38,7 @@ class AtagDataStore:
         mail = mail or kwargs.get("email")
         self.config = HostConfig(host, port, mail, hostname, ssl, proxy)
         self._last_api_call = (
-            datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(1970, 1, 1, 0, 0, 0),
             None,
         )
         self._target_temperature = None
@@ -260,7 +260,7 @@ class AtagDataStore:
         await self.can_call()
         try:
             self._last_api_call = (
-                datetime.datetime.now().astimezone(),
+                datetime.datetime.utcnow(),
                 list(kwargs)[0],
             )
             json_data = await self.connection.atag_put(payload)
@@ -278,7 +278,7 @@ class AtagDataStore:
             self.initialized = True
         await self.can_call()
         try:
-            self._last_api_call = (datetime.datetime.now().astimezone(), None)
+            self._last_api_call = (datetime.datetime.utcnow(), None)
             json_data = await self.connection.atag_put(self.config.pair_msg)
             status = check_reply(json_data)
             if status == 2 and self.device is not None:
@@ -303,7 +303,7 @@ class AtagDataStore:
     async def can_call(self):
         """Sleep until next API call can be made, to avoid device overload"""
         slept = min(
-            datetime.datetime.now().astimezone() - self._last_api_call[0],
+            datetime.datetime.utcnow() - self._last_api_call[0],
             datetime.timedelta(seconds=MINTIMEBETWEENCALLS),
         ).seconds
         await asyncio.sleep(MINTIMEBETWEENCALLS - slept)
