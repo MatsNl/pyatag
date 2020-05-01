@@ -17,8 +17,7 @@ async def main():
 
 async def run(session):
     
-    atag = AtagOne('192.168.1.104', session,'mats.nelissen@gmail.com')
-    # atag = AtagOne('atag.local', aiohttp.ClientSession(),mail='mats.nelissen@gmail.com')
+    atag = AtagOne('atag.local', session,None)
     await atag.authorize()
     await atag.initialize()
     for s in atag.report:
