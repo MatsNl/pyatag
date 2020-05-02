@@ -51,9 +51,9 @@ def get_data_from_jsonreply(json_response):
                 else:
                     res = _reply[group][key]
                     if isinstance(res, Number):
-                        result[key] = {'state': float(res)}
+                        result[key] = {"state": float(res)}
                     else:
-                        result[key] = {'state': res}
+                        result[key] = {"state": res}
     except KeyError as err:
         raise ResponseError("Invalid value {} for {}".format(err, group))
     return result
@@ -66,24 +66,21 @@ def check_reply(json_reply):
 
 def get_state_from_worker(key, worker):
     """
-    Returns:\n
-    Sensor values when decoded (int based).\n
-    Binary representation when not decoded.\n
-    Time based on seconds from 2000 (UTC).
+    Returns
+    - Sensor values when decoded (int based).
+    - Binary representation when not decoded.
+    - Time based on seconds from 2000 (UTC).
     """
     if key == BOILER_STATUS:
-        return {'state': list(map(int, list("{0:04b}".format(worker & 14))))[0:3]}  
+        return {"state": list(map(int, list("{0:04b}".format(worker & 14))))[0:3]}
     if SENSOR_VALUES[key] == "time":
-        return {'state': (
-            datetime(2000, 1, 1, tzinfo=timezone.utc) +
-            timedelta(seconds=worker)
-        ).astimezone(tz=LOCALTZ)}
+        return {"state": datetime(2000, 1, 1) + timedelta(seconds=worker)}
     if SENSOR_VALUES[key] == "int":
         # TODO not yet decoded integer values
-        return {'state_orig': worker, 'state': int_to_binary(worker)}
+        return {"state_orig": worker, "state": int_to_binary(worker)}
     if worker in SENSOR_VALUES[key]:
         return SENSOR_VALUES[key][worker]
-    return {'state': worker}  # not yet figured out what it means
+    return {"state": worker}  # not yet figured out what it means
 
 
 def int_to_binary(worker):
@@ -216,10 +213,18 @@ class HostConfig:
                 "seqnr": 1,
                 "account_auth": {"user_account": self.mail, "mac_address": self._mac},
                 "control": {},
+                "configuration": {},
             }
         }
 
         for key, val in kwargs.items():
             json_payload["update_message"]["control"][CONTROLS[key]] = val
+            if key == "ch_mode" and val == 3:
+                json_payload["update_message"]["control"]["vacation_duration"] = int(
+                    timedelta(days=1).total_seconds()
+                )
+                json_payload["update_message"]["configuration"]["start_vacation"] = int(
+                    (datetime.utcnow() - datetime(2000, 1, 1)).total_seconds()
+                )
 
         return json_payload

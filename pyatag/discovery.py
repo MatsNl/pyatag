@@ -21,7 +21,8 @@ class Discovery(asyncio.DatagramProtocol):
 
 async def async_discover_atag():
     """Discover Atag on local network."""
-    # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)', ('xxx.xxx.x.x', xxxx)]
+    # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)',
+    # ('xxx.xxx.x.x', xxxx)]
     trans, proto = await asyncio.get_event_loop().create_datagram_endpoint(
         Discovery, local_addr=(LOCALHOST, ATAG_UDP_PORT)
     )
@@ -38,7 +39,8 @@ async def async_discover_atag():
 
 def discover_atag():
     """Discover Atag on local network."""
-    # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)', ('xxx.xxx.x.x', xxxx)]
+    # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)',
+    # ('xxx.xxx.x.x', xxxx)]
     import socket
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

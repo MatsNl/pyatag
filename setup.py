@@ -5,7 +5,7 @@ from distutils.core import setup
 setup(
     name="pyatag",  # How you named your package folder (MyLib)
     packages=["pyatag"],  # Chose the same as "name"
-    version="0.2.15",  # Sta2t with a small number
+    version="0.2.19",  # Sta2t with a small number
     license="MIT",
     description="Connection to ATAG One Thermostat",
     author="Mats",  # Type in your name
