@@ -1,52 +1,39 @@
+"""Example program to test pyatag."""
 import asyncio
-from pprint import pprint
 
-from gateway import AtagOne
+from pyatag import AtagOne
 import aiohttp
 import logging
 
-handle = 'atag'
+handle = "atag"
 logging.basicConfig()
 _LOGGER = logging.getLogger(handle)
 _LOGGER.setLevel(logging.DEBUG)
 
+
 async def main():
+    """Initialize session for main program."""
     async with aiohttp.ClientSession() as session:
         await run(session)
 
 
 async def run(session):
-    
-    atag = AtagOne('atag.local', session,None)
+    """Run example main program."""
+    atag = AtagOne("localhost", session, email=None)
     await atag.authorize()
-    await atag.initialize()
-    for s in atag.report:
-        _LOGGER.debug(f"{s.name} = {s.state}" )
+    await atag.update(force=True)
 
-    for attr in dir(atag.climate):
-        _LOGGER.debug("atag.climate.%s = %r" % (attr, getattr(atag.climate, attr)))
-        
-    await atag.climate.set_preset_mode('away')
+    for s in atag.report:
+        _LOGGER.debug(f"{s.name} = {s.state}")
+
+    for a in dir(atag.climate):
+        _LOGGER.debug("atag.climate.%s = %r" % (a, getattr(atag.climate, a)))
+
+    await atag.climate.set_preset_mode("manual")
+    await atag.climate.set_temp(11)
+
     _LOGGER.debug(atag.report.report_time)
     _LOGGER.debug(atag.dhw.temperature)
-
-    #await atag.climate.set_hvac_mode('heat')
-
-
-
-    #     print('{}: {}'.format(light.name, 'on' if light.state['on'] else 'off'))
-
-    # # Change state of a light.
-    # await light.set_state(on=not light.state['on'])
-
-    # print()
-    # print('Groups:')
-    # for id in bridge.groups:
-    #     group = bridge.groups[id]
-    #     print('{}: {}'.format(group.name, 'on' if group.action['on'] else 'off'))
-
-    # # Change state of a group.
-    # await group.set_action(on=not group.state['on'])
 
 
 asyncio.run(main())
