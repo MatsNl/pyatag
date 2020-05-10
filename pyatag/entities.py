@@ -157,16 +157,17 @@ class Control(Sensor):
             return self.raw % 150
         return self.raw
 
-    async def set_state(self, t):
+    async def set_state(self, target):
         """Set the Control to a new target state."""
         s = None
-        if isinstance(t, str):
-            t = t.lower()
+        t = target
+        if isinstance(target, str):
+            t = target.lower()
             s = self.state.lower()
 
         if t in [self.state, s]:
             return True
-        self._target = t
+        self._target = target
         if self._states is not None:
             t = {v.lower(): k for k, v in self._states.items()}.get(t)
         self._last_call = datetime.utcnow()
