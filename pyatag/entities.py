@@ -159,19 +159,15 @@ class Control(Sensor):
 
     async def set_state(self, target):
         """Set the Control to a new target state."""
-        s = None
-        t = target
-        if isinstance(target, str):
-            t = target.lower()
-            s = self.state.lower()
-
-        if t in [self.state, s]:
+        target_int = None
+        if self._states is not None:
+            target = {v.lower(): v for v in self._states.values()}.get(target.lower())
+            target_int = {v: k for k, v in self._states.items()}.get(target)
+        if target == self.state:
             return True
         self._target = target
-        if self._states is not None:
-            t = {v.lower(): k for k, v in self._states.items()}.get(t)
         self._last_call = datetime.utcnow()
-        return await self._setter(**{self.id: t})
+        return await self._setter(**{self.id: target_int or target})
 
 
 class Climate:
