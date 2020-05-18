@@ -9,8 +9,6 @@ import logging
 from .errors import raise_error
 from .entities import Report, Climate, DHW
 
-_LOGGER = logging.getLogger()
-
 
 class AtagOne:
     """Central data store entity."""
@@ -20,8 +18,9 @@ class AtagOne:
         self.host = host
         self.email = email or ""
         self.port = port
+        self.logger = logging.getLogger("pyatag")
         if email is None:
-            _LOGGER.debug("No email address provided.")
+            self.logger.debug("No email address provided.")
         self.session = session
         self._device = device
         self._authorized = device is not None
@@ -66,7 +65,7 @@ class AtagOne:
         }
         await self.request("post", "pair", json)
         self.authorized = True
-        _LOGGER.debug(f"Authorized: {self.authorized}")
+        self.logger.debug(f"Authorized: {self.authorized}")
         return self.authorized
 
     async def request(self, meth, path, json=None):
