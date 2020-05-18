@@ -3,6 +3,7 @@
 ## [0.3.1]
 - Fix controls not working in 0.3.0
 - Fix for inconsistently capitalized preset modes
+- Fix binary division for status reporting
 
 ## [0.3.0]
 - Rewrite to allign objects to HomeAssistant entity types
