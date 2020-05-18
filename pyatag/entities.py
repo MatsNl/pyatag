@@ -96,9 +96,9 @@ class Sensor:
             return convert_time(self.raw, self.sensorclass)
         if self.id == "boiler_status":
             return {
-                "burner": self.raw % 8 == 8,
-                "dhw": self.raw % 4 == 4,
-                "ch": self.raw % 2 == 2,
+                "burner": self.raw & 8 == 8,
+                "dhw": self.raw & 4 == 4,
+                "ch": self.raw & 2 == 2,
             }
         if self.id == "download_url":
             return self.raw.split("/")[-1]
