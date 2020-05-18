@@ -9,7 +9,7 @@ import logging
 from .errors import raise_error
 from .entities import Report, Climate, DHW
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger()
 
 
 class AtagOne:
