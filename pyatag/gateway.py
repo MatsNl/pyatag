@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import re
 import uuid
 import asyncio
-import logging
 from .errors import raise_error
 from .entities import Report, Climate, DHW
 
