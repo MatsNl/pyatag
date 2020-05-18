@@ -1,311 +1,147 @@
 """Gateway connecting to ATAG thermostat."""
+import aiohttp
 import logging
-import datetime
+from datetime import datetime, timedelta
+import re
+import uuid
 import asyncio
-from aiohttp import ClientSession
-from .helpers import HostConfig, HttpConnector, get_data_from_jsonreply, check_reply
-from .errors import ResponseError, RequestError
-from .const import BOILER_STATUS, MODES
+import logging
+from .errors import raise_error
+from .entities import Report, Climate, DHW
 
 _LOGGER = logging.getLogger(__name__)
-MINTIMEBETWEENCALLS = 5  # Time in seconds
 
 
-class AtagDataStore:
+class AtagOne:
     """Central data store entity."""
 
-    def __init__(
-        self,
-        session=None,
-        host=None,
-        port=10000,
-        device=None,
-        hostname="HomeAssistant",
-        mail=None,
-        auth=None,
-        ssl=None,
-        proxy=None,
-        paired=False,
-        **kwargs
-    ):
-
-        self._initialized = False
+    def __init__(self, host, session, device=None, email=None, port=10000):
+        """Initialize main AtagOne object."""
+        self.host = host
+        self.email = email or ""
+        self.port = port
+        if email is None:
+            _LOGGER.debug("No email address provided.")
+        self.session = session
         self._device = device
-        self._paired = paired
-        self.connection = None
-        self.sensordata = {}
-        self._session = session
-        mail = mail or kwargs.get("email")
-        self.config = HostConfig(host, port, mail, hostname, ssl, proxy)
-        self._last_api_call = (
-            datetime.datetime(1970, 1, 1, 0, 0, 0),
-            None,
-        )
-        self._target_temperature = None
-        self._dhw_target_temperature = None
-        self._hvac_mode = None
-        self._hold_mode = None
-        if self.config.host:
-            self.initialized = True
+        self._authorized = device is not None
+        self._mac = ":".join(re.findall("..", "%012x" % uuid.getnode()))
+        self._last_call = datetime(1970, 1, 1)
+        self._lock = asyncio.Lock()
+
+        self.climate = None
+        self.dhw = None
+        self.report = None
 
     @property
-    def device(self):
-        """Device identifier"""
+    def id(self):
+        """Return the ID of the bridge."""
+        if self.report:
+            return self.report["device_id"].state
         return self._device
 
     @property
     def apiversion(self):
-        """Return api version reported by device"""
-        return self.sensordata.get("download_url").get("state").split("/")[-1]
+        """Return the ID of the bridge."""
+        if self.report:
+            return self.report["download_url"].state
 
-    @property
-    def paired(self):
-        """Pairing status"""
-        return self._paired
+    async def authorize(self):
+        """Check auth status."""
+        json = {
+            "pair_message": {
+                "seqnr": 1,
+                "account_auth": {"user_account": self.email, "mac_address": self._mac},
+                "accounts": {
+                    "entries": [
+                        {
+                            "user_account": self.email,
+                            "mac_address": self._mac,
+                            "device_name": "HomeAssistant",
+                            "account_type": 1,
+                        }
+                    ]
+                },
+            }
+        }
+        await self.request("post", "pair", json)
+        self.authorized = True
+        _LOGGER.debug(f"Authorized: {self.authorized}")
+        return self.authorized
 
-    @property
-    def initialized(self):
-        """Initialization completed"""
-        return self._initialized
+    async def request(self, meth, path, json=None):
+        """Make a request to the API."""
+        url = f"http://{self.host}:{self.port}/{path}"
+        async with self._lock:
+            slept = (datetime.utcnow() - self._last_call).total_seconds()
+            if slept < 5:
+                await asyncio.sleep(5 - slept)
+            self._last_call = datetime.utcnow()
+            try:
+                async with self.session.request(meth, url, json=json) as res:
+                    data = await res.json()
+                    _raise_on_error(data)
+                    return data
+            except aiohttp.ClientConnectorError as err:
+                raise_error(err, 2)
+            except Exception as err:
+                raise_error(err, 5)
 
-    @initialized.setter
-    def initialized(self, arg=None):
-        if not self.config.host:
-            raise RequestError("Attempted initialization without hostaddress")
-        if self._session is None:
-            self._session = ClientSession()
-        self.connection = HttpConnector(self.config, self._session)
-        self._initialized = True
+    async def update(self, info=71, force=False):
+        """Get latest data from API."""
+        if (datetime.utcnow() - self._last_call).total_seconds() > 15 or force:
+            json = {
+                "retrieve_message": {
+                    "seqnr": 1,
+                    "account_auth": {
+                        "user_account": self.email,
+                        "mac_address": self._mac,
+                    },
+                    "info": info,
+                }
+            }
+            res = await self.request("get", "retrieve", json)
+            res = res["retrieve_reply"]
+            res["report"].update(res["report"].pop("details"))
+            if self.report is None:
+                self.report = Report(res, self.update, self.setter)
+                self.climate = Climate(self.report)
+                self.dhw = DHW(self.report)
+            self.report.update(res)
+            return self.report
+        return None
 
-    @property
-    def temp_unit(self):
-        """Return temperature unit"""
-        return self.sensordata["temp_unit"]["state"]
+    async def setter(self, **kwargs):
+        """Set control items."""
+        json = {
+            "update_message": {
+                "seqnr": 1,
+                "account_auth": {"user_account": self.email, "mac_address": self._mac},
+                "control": {},
+                "configuration": {},
+            }
+        }
 
-    @property
-    def burner_status(self):
-        """Returns a tuple: boolean for burning and percentage for modulation"""
-        if isinstance(self.sensordata.get(BOILER_STATUS).get("state"), list):
-            if self.sensordata[BOILER_STATUS]["state"][0] == 1:
-                return (True, self.sensordata.get("rel_mod_level"))
-        return (False, 0)
-
-    @property
-    def cv_status(self):
-        """Return boolean indicator for heating for CV"""
-        if self.burner_status:
-            return self.sensordata[BOILER_STATUS]["state"][2] == 1
-
-    @property
-    def dhw_status(self):
-        """Return boolean indicator for heating for DHW"""
-        if self.burner_status:
-            return self.sensordata[BOILER_STATUS]["state"][1] == 1
-
-    @property
-    def hvac_mode(self):
-        """Return the operating mode (Weather or Regular/Heat)"""
-        if (
-            self._last_api_call[1] == "ch_control_mode"
-            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
-        ):
-            return self._hvac_mode
-        return self.sensordata.get("ch_control_mode").get("state")
-
-    async def set_hvac_mode(self, mode: str) -> bool:
-        """Set the operating mode (Weather or Regular/Heat) """
-        if mode == self.hvac_mode:
-            return True
-        int_mode = 1 if mode == "auto" else 0
-        try:
-            if await self.async_set_atag(ch_control_mode=int_mode):
-                self._hvac_mode = mode
-                return True
-        except ResponseError as err:
-            _LOGGER.error("Failed to update mode: %s", err)
-            return False
-
-    @property
-    def hold_mode(self):
-        """Return the hold mode (Manual/Auto/Extend/Vacation/Fireplace)"""
-        if (
-            self._last_api_call[1] == "ch_mode"
-            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
-        ):
-            return self._hold_mode
-        return self.sensordata.get("ch_mode").get("state")
-
-    @property
-    def hold_mode_duration(self):
-        """Return remaining time on hold mode"""
-        if self.hold_mode == "extend":
-            seconds = self.sensordata.get("ch_mode_duration").get("state")
-            return datetime.timedelta(seconds=seconds)
-
-    async def set_hold_mode(self, mode: str, **kwargs) -> bool:
-        """Set the hold mode (Manual/Auto/Extend/Vacation/Fireplace) """
-        if mode == self.hold_mode:
-            return True
-        int_mode = MODES.get(mode)
-        if not int_mode:
-            _LOGGER.error("Received invalid mode: %s", mode)
-            return False
-        try:
-            if await self.async_set_atag(ch_mode=int_mode):
-                self._hold_mode = mode
-                return True
-        except ResponseError as err:
-            _LOGGER.error("Failed to update mode: %s", err)
-            return False
-
-    @property
-    def temperature(self):
-        """Return current CV temperature"""
-        return self.sensordata.get("room_temp").get("state")
-
-    @property
-    def target_temperature(self):
-        """Return target CV temperature"""
-        if (
-            self._last_api_call[1] == "temperature"
-            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
-        ):
-            return self._target_temperature
-        return self.sensordata.get("ch_mode_temp").get("state")
-
-    async def set_temp(self, target: float):
-        """Set target CV temperature"""
-        if target == self.target_temperature:
-            return True
-        try:
-            if await self.async_set_atag(temperature=target):
-                self._target_temperature = target
-                return True
-        except ResponseError as err:
-            _LOGGER.error("Failed to set atag: %s", err)
-            return False
-
-    @property
-    def dhw_temperature(self):
-        """Return current dhw temperature"""
-        return self.sensordata.get("dhw_water_temp").get("state")
-
-    @property
-    def dhw_min_temp(self):
-        """Return dhw min temperature"""
-        return self.sensordata.get("dhw_min_set").get("state")
-
-    @property
-    def dhw_max_temp(self):
-        """Return dhw max temperature"""
-        return self.sensordata.get("dhw_max_set").get("state")
-
-    @property
-    def dhw_target_temperature(self):
-        """Return dhw target temperature"""
-
-        if self.dhw_status:
-            return self.sensordata.get("dhw_temp_setp").get("state")
-
-        if (
-            self._last_api_call[1] == "dhw_mode_temp"
-            and self.sensordata.get("report_time").get("state") < self._last_api_call[0]
-        ):
-            return self._dhw_target_temperature
-        return self.sensordata.get("dhw_mode_temp").get("state") % 150
-
-    async def dhw_set_temp(self, target: float):
-        """Set dhw target temperature"""
-        if target == self.dhw_target_temperature:
-            return True
-        try:
-            if await self.async_set_atag(dhw_target_temp=target):
-                self._dhw_target_temperature = target
-                return True
-        except ResponseError as err:
-            _LOGGER.error("Failed to set atag: %s", err)
-            return False
-
-    async def async_host_search(self):
-        """Atag Discovery in case no host provided."""
-        from .discovery import discover_atag
-
-        _LOGGER.debug("No host provided, attempting discovery...")
-        host, device = await discover_atag()
-        if host and device:
-            self.config.host = host
-            self._device = device
-            self.config.update_params()
-
-    async def async_update(self):
-        """Read data from thermostat."""
-        if not self.initialized:
-            self.initialized = True
-
-        if not self.paired:
-            await self.async_check_pair_status()
-        await self.can_call()
-        try:
-            json_data = await self.connection.atag_put(data=self.config.retrieve_msg)
-            sensordata = get_data_from_jsonreply(json_data)
-            if sensordata:
-                self.sensordata = sensordata
-        except ResponseError as err:
-            _LOGGER.warning("Failed to update Atag Data: %s", err)
-
-    async def async_set_atag(self, **kwargs):
-        """set mode and/or temperature."""
-
-        payload = self.config.get_update_msg(**kwargs)
-        await self.can_call()
-        try:
-            self._last_api_call = (
-                datetime.datetime.utcnow(),
-                list(kwargs)[0],
-            )
-            json_data = await self.connection.atag_put(payload)
-            _LOGGER.debug("Update reply: %s", json_data)
-            return check_reply(json_data) == 2
-        except (ResponseError, KeyError) as err:
-            raise RequestError("Failed to set Atag: {}".format(err))
-
-    async def async_check_pair_status(self):
-        """Confirm we are authorized."""
-
-        if self.paired:
-            return True
-        if not self.initialized:
-            self.initialized = True
-        await self.can_call()
-        try:
-            self._last_api_call = (datetime.datetime.utcnow(), None)
-            json_data = await self.connection.atag_put(self.config.pair_msg)
-            status = check_reply(json_data)
-            if status == 2 and self.device is not None:
-                self._paired = True
-            elif status == 2:
-                json_data = await self.connection.atag_put(
-                    self.config.get_retrieve_msg(info=0)
+        for key, val in kwargs.items():
+            json["update_message"]["control"][key] = val
+            if key == "ch_mode" and val == 3:
+                json["update_message"]["control"]["vacation_duration"] = int(
+                    timedelta(days=1).total_seconds()
                 )
-                self._device = json_data["retrieve_reply"]["status"]["device_id"]
-                self._paired = True
-            else:
-                self._paired = False
-                raise ResponseError("Pairing failed")
-        except ResponseError as err:
-            self._paired = False
-            raise RequestError("Pairing failed: {}".format(err))
+                json["update_message"]["configuration"]["start_vacation"] = int(
+                    (datetime.utcnow() - datetime(2000, 1, 1)).total_seconds()
+                )
+        res = await self.request("post", "update", json)
+        return res["update_reply"]
 
-    async def async_close(self):
-        """Close the connection"""
-        await self.connection.async_close()
 
-    async def can_call(self):
-        """Sleep until next API call can be made, to avoid device overload"""
-        slept = min(
-            datetime.datetime.utcnow() - self._last_api_call[0],
-            datetime.timedelta(seconds=MINTIMEBETWEENCALLS),
-        ).seconds
-        await asyncio.sleep(MINTIMEBETWEENCALLS - slept)
+def _raise_on_error(data):
+    """Check response for error message."""
+    if data[list(data.keys())[0]]["acc_status"] != 2:
+        raise_error(data, 1)
 
-        return True
+    if isinstance(data, list):
+        data = data[0]
+
+    if isinstance(data, dict) and "error" in data:
+        raise_error(data)
