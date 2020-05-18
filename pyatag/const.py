@@ -5,6 +5,7 @@ CLASSES = {
     "time": ["time", None, "mdi:clock"],
     "duration": ["duration", None, "mdi:timer"],
     "hours": [None, "h", "mdi:clock"],
+    "rate": [None, "%", "mdi:fire"],
 }
 
 SENSORS = {

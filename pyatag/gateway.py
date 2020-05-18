@@ -108,8 +108,8 @@ class AtagOne:
                 self.climate = Climate(self.report)
                 self.dhw = DHW(self.report)
             self.report.update(res)
-            return self.report
-        return None
+            return True
+        return False
 
     async def setter(self, **kwargs):
         """Set control items."""

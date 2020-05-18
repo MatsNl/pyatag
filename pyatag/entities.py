@@ -76,6 +76,8 @@ class Sensor:
         self._info = classes.get(self.id.split("_")[-1])
         if id == "tout_avg":
             self._info = classes["temp"]
+        if id.lower() in ["rel_mod_level", "flame"]:
+            self._info = classes["rate"]
         self._states = STATES.get(self.id)
 
     @property
