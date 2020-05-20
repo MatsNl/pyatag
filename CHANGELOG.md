@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.3.2]
+- Fix bugs identified during HA test development
+
 ## [0.3.1]
 - Fix controls not working in 0.3.0
 - Fix for inconsistently capitalized preset modes

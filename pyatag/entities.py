@@ -76,7 +76,7 @@ class Sensor:
         self._info = classes.get(self.id.split("_")[-1])
         if id == "tout_avg":
             self._info = classes["temp"]
-        if id.lower() in ["rel_mod_level", "flame"]:
+        if id == "rel_mod_level":
             self._info = classes["rate"]
         self._states = STATES.get(self.id)
 
@@ -129,7 +129,7 @@ class Sensor:
 
     def __repr__(self):
         """Return the name of the Sensor."""
-        return self.name
+        return str(self.state)
 
 
 class Control(Sensor):
@@ -290,6 +290,11 @@ class DHW:
             return self._report["dhw_temp_setp"].state
         return self._report["dhw_mode_temp"].state
 
+    @property
+    def current_operation(self):
+        """Return the current operating mode (Eco or Performance (Comfort)."""
+        return self._report["dhw_mode"].state if self.status else "off"
+
     async def set_temp(self, target: float):
         """Set dhw target temperature."""
-        await self._report["dhw_target_temp"].set_state(target)
+        await self._report["dhw_temp_setp"].set_state(target)

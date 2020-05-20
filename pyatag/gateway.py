@@ -87,27 +87,25 @@ class AtagOne:
 
     async def update(self, info=71, force=False):
         """Get latest data from API."""
-        if (datetime.utcnow() - self._last_call).total_seconds() > 15 or force:
-            json = {
-                "retrieve_message": {
-                    "seqnr": 1,
-                    "account_auth": {
-                        "user_account": self.email,
-                        "mac_address": self._mac,
-                    },
-                    "info": info,
-                }
+        if (datetime.utcnow() - self._last_call).total_seconds() < 15 and not force:
+            return False
+        json = {
+            "retrieve_message": {
+                "seqnr": 1,
+                "account_auth": {"user_account": self.email, "mac_address": self._mac,},
+                "info": info,
             }
-            res = await self.request("get", "retrieve", json)
-            res = res["retrieve_reply"]
-            res["report"].update(res["report"].pop("details"))
-            if self.report is None:
-                self.report = Report(res, self.update, self.setter)
-                self.climate = Climate(self.report)
-                self.dhw = DHW(self.report)
+        }
+        res = await self.request("get", "retrieve", json)
+        res = res["retrieve_reply"]
+        res["report"].update(res["report"].pop("details"))
+        if self.report is None:
+            self.report = Report(res, self.update, self.setter)
+            self.climate = Climate(self.report)
+            self.dhw = DHW(self.report)
+        else:
             self.report.update(res)
-            return True
-        return False
+        return True
 
     async def setter(self, **kwargs):
         """Set control items."""

@@ -19,7 +19,7 @@ async def main():
 
 async def run(session):
     """Run example main program."""
-    atag = AtagOne("localhost", session, email=None)
+    atag = AtagOne("atag.local", session, email=None)
     await atag.authorize()
     await atag.update(force=True)
 

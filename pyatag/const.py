@@ -44,5 +44,6 @@ STATES = {
     "temp_unit": {0: "°C", 1: "°F"},
     "ch_mode": {1: "Manual", 2: "Auto", 3: "away", 4: "Extend", 5: "boost"},
     "ch_control_mode": {0: "heat", 1: "auto"},
+    "dhw_mode": {0: "performance", 1: "eco"},
 }
 DEFAULT_PORT = 10000

@@ -5,7 +5,7 @@ long_description = open("README.md").read()
 
 setup(
     name="pyatag",
-    version="0.3.1.2",
+    version="0.3.2",
     license="MIT",
     url="https://github.com/MatsNl/pyatag",
     author="Mats Nelissen",
