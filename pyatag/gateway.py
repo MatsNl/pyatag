@@ -66,7 +66,7 @@ class AtagOne:
         try:
             await self.request("post", "pair", json)
         except AtagException as err:
-            _LOGGER.error("Authorization failed: %s", err)
+            _LOGGER.debug("Authorization failed: %s", err)
             return self._authorized
         self._authorized = True
         _LOGGER.debug("Authorized successfully")
@@ -106,7 +106,7 @@ class AtagOne:
             _LOGGER.debug("Queueing data update")
             res = await self.request("get", "retrieve", json, force)
         except AtagException as err:
-            _LOGGER.warning("Update failed: %s", err)
+            _LOGGER.debug("Update failed: %s", err)
             return False
         res = res["retrieve_reply"]
         res["report"].update(res["report"].pop("details"))
@@ -141,7 +141,7 @@ class AtagOne:
         try:
             res = await self.request("post", "update", json)
         except AtagException as err:
-            _LOGGER.warning("Failed to set Atag: %s", err)
+            _LOGGER.debug("Failed to set Atag: %s", err)
             return False
         return res["update_reply"]
 
