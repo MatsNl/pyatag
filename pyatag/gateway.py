@@ -98,7 +98,7 @@ class AtagOne:
         json = {
             "retrieve_message": {
                 "seqnr": 1,
-                "account_auth": {"user_account": self.email, "mac_address": self._mac,},
+                "account_auth": {"user_account": self.email, "mac_address": self._mac},
                 "info": info,
             }
         }
