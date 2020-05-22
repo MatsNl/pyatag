@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 '''
 Provides connection to ATAG One Thermostat REST API
 
@@ -9,6 +8,7 @@ from pytag.gateway import AtagDataStore
 '''
 import asyncio
 from contextlib import suppress
+
 #from tests.test import insert_in_db
 # import pprint
 

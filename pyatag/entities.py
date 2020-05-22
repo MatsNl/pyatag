@@ -1,6 +1,7 @@
 """Classes within AtagOne object."""
-from .const import CLASSES, SENSORS, STATES
 from datetime import datetime, timedelta
+
+from .const import CLASSES, SENSORS, STATES
 
 
 def convert_time(seconds, sensorclass="time"):

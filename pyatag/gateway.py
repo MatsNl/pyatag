@@ -1,12 +1,14 @@
 """Gateway connecting to ATAG thermostat."""
-import aiohttp
+import asyncio
 import logging
-from datetime import datetime, timedelta
 import re
 import uuid
-import asyncio
-from .errors import raise_error, AtagException
-from .entities import Report, Climate, DHW
+from datetime import datetime, timedelta
+
+import aiohttp
+
+from .entities import DHW, Climate, Report
+from .errors import AtagException, raise_error
 
 _LOGGER = logging.getLogger(__name__)
 

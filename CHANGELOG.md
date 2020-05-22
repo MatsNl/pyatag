@@ -13,7 +13,7 @@
 - Fix binary division for status reporting
 
 ## [0.3.0]
-- Rewrite to allign objects to HomeAssistant entity types
+- Rewrite to align objects to HomeAssistant entity types
 
 ## [0.2.19]
 - Fixed a timezone related bug introduced in 0.2.18

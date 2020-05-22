@@ -1,21 +1,27 @@
 """Automatic discovery of ATAG Thermostat on LAN."""
 import asyncio
-from .helpers import RequestError
+import logging
+
+from .errors import RequestError
 
 ATAG_UDP_PORT = 11000
 LOCALHOST = "0.0.0.0"
+_LOGGER = logging.getLogger(__name__)
 
 
 class Discovery(asyncio.DatagramProtocol):
     """Discovery class."""
 
     def __init__(self):
+        """Start listener."""
         self.data = asyncio.Future()
 
     def connection_made(self, transport):
-        print("Listening on UDP {}".format(ATAG_UDP_PORT))
+        """Log connection made."""
+        _LOGGER.debug("Listening on UDP %s", ATAG_UDP_PORT)
 
     def datagram_received(self, data, addr):
+        """Record broadcasted data."""
         self.data.set_result([data, addr])
 
 

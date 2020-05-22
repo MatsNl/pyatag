@@ -1,7 +1,6 @@
 """Setup script."""
 from setuptools import setup
 
-
 long_description = open("README.md").read()
 
 setup(
