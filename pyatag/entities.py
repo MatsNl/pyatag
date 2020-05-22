@@ -33,18 +33,18 @@ class Report:
     def _process_raw(self, raw):
         """Push data to the sensor and control objects."""
         for grp in ["configuration", "status", "report", "control"]:
-            for id, raw_i in raw[grp].items():
-                name = SENSORS.get(id)
-                obj = self._items.get(name) or self._items.get(id)
+            for _id, raw_i in raw[grp].items():
+                name = SENSORS.get(_id)
+                obj = self._items.get(name) or self._items.get(_id)
 
                 if obj is not None:
                     obj.raw = raw_i
                 elif grp == "control":
-                    self._items[name or id] = Control(
-                        id, raw_i, self._classes, self._setter
+                    self._items[name or _id] = Control(
+                        _id, raw_i, self._classes, self._setter
                     )
                 else:
-                    self._items[name or id] = Sensor(id, raw_i, self._classes)
+                    self._items[name or _id] = Sensor(_id, raw_i, self._classes)
 
     def items(self):
         """Return the report objects."""
@@ -69,14 +69,14 @@ class Report:
 class Sensor:
     """Represents an Atag sensor."""
 
-    def __init__(self, id, raw, classes):
+    def __init__(self, _id, raw, classes):
         """Initiate sensor object."""
-        self.id = id
+        self.id = _id
         self.raw = raw
         self._info = classes.get(self.id.split("_")[-1])
-        if id == "tout_avg":
+        if _id == "tout_avg":
             self._info = classes["temp"]
-        if id == "rel_mod_level":
+        if _id == "rel_mod_level":
             self._info = classes["rate"]
         self._states = STATES.get(self.id)
 
@@ -135,9 +135,9 @@ class Sensor:
 class Control(Sensor):
     """Represents an Atag control."""
 
-    def __init__(self, id, raw, classes, setter):
+    def __init__(self, _id, raw, classes, setter):
         """Initiate Control object."""
-        super().__init__(id, raw, classes)
+        super().__init__(_id, raw, classes)
         self._setter = setter
         self._target = None
         self._last_call = None

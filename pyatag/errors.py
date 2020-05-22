@@ -34,7 +34,7 @@ ERRORS = {
 }
 
 
-def raise_error(error, type=None):
+def raise_error(error, errortype=None):
     """Raise the appropriate error."""
     cls = ERRORS.get(type, AtagException)
-    raise cls(error)
+    raise cls(errortype)

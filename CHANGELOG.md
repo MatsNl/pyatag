@@ -1,7 +1,11 @@
 # Changelog
 
+## [0.3.3]
+- Remove sleep from updater (request only)
+
 ## [0.3.2]
-- Fix bugs identified during HA test development
+- Add water heater set temperature service
+- Small bugfixes
 
 ## [0.3.1]
 - Fix controls not working in 0.3.0
