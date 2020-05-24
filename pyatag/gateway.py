@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import aiohttp
+import async_timeout
 
 from .entities import DHW, Climate, Report
 from .errors import AtagException, raise_error
@@ -49,6 +50,9 @@ class AtagOne:
 
     async def authorize(self):
         """Check auth status."""
+        if self._authorized:
+            _LOGGER.debug("Not checking auth status as ID was provided")
+            return True
         json = {
             "pair_message": {
                 "seqnr": 1,
@@ -67,12 +71,13 @@ class AtagOne:
         }
         try:
             await self.request("post", "pair", json)
+
         except AtagException as err:
             _LOGGER.debug("Authorization failed: %s", err)
-            return self._authorized
+            raise err
         self._authorized = True
         _LOGGER.debug("Authorized successfully")
-        return self._authorized
+        return True
 
     async def request(self, meth, path, json=None, force=False):
         """Make a request to the API."""
@@ -85,11 +90,12 @@ class AtagOne:
             self._last_call = datetime.utcnow()
             try:
                 _LOGGER.debug("Calling %s for %s", self.host, path)
-                async with self.session.request(meth, url, json=json) as res:
-                    data = await res.json()
-                    _raise_on_error(data)
-                    return data
-            except aiohttp.ClientConnectorError as err:
+                with async_timeout.timeout(15):
+                    async with self.session.request(meth, url, json=json) as res:
+                        data = await res.json()
+                        _raise_on_error(data)
+                        return data
+            except (aiohttp.ClientConnectorError, TimeoutError) as err:
                 raise_error(err, 2)
             except Exception as err:
                 _LOGGER.debug("Caught unexpected exception %s", err)
@@ -109,7 +115,7 @@ class AtagOne:
             res = await self.request("get", "retrieve", json, force)
         except AtagException as err:
             _LOGGER.debug("Update failed: %s", err)
-            return False
+            raise err
         res = res["retrieve_reply"]
         res["report"].update(res["report"].pop("details"))
         if self.report is None:
