@@ -180,6 +180,20 @@ class Climate:
         """Initiate the main climate object."""
         self._report = report
 
+    def __repr__(self):
+        """Return Climate properties."""
+        return ", ".join(
+            [
+                f"temperature: {self.temperature} {self.temp_unit}",
+                f"target: {self.target_temperature} {self.temp_unit}",
+                f"status: {self.status}",
+                f"burner status: {self.burnerstatus}",
+                f"hvac mode: {self.hvac_mode}",
+                f"preset mode: {self.preset_mode}",
+                f"flame: {self.flame}",
+            ]
+        )
+
     @property
     def temp_unit(self):
         """Return temperature unit."""

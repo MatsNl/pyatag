@@ -3,11 +3,10 @@ import asyncio
 import logging
 
 import aiohttp
-from pyatag import AtagOne
+from pyatag import AtagException, AtagOne
 
-handle = "atag"
 logging.basicConfig()
-_LOGGER = logging.getLogger(handle)
+_LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
 
 
@@ -20,14 +19,20 @@ async def main():
 async def run(session):
     """Run example main program."""
     atag = AtagOne("atag.local", session, email=None)
-    await atag.authorize()
-    await atag.update(force=True)
+    try:
+        await atag.authorize()
+        await atag.update(force=True)
+    except AtagException as err:
+        _LOGGER.error(err)
+        return False
 
-    for s in atag.report:
-        _LOGGER.debug(f"{s.name} = {s.state}")
+    for sensor in atag.report:
+        _LOGGER.debug("%s = %s", sensor.name, sensor.state)
 
-    for a in dir(atag.climate):
-        _LOGGER.debug("atag.climate.{} = {!r}".format(a, getattr(atag.climate, a)))
+    for attribute in dir(atag.climate):
+        _LOGGER.debug(
+            "atag.climate.%s = %s", attribute, getattr(atag.climate, attribute)
+        )
 
     await atag.climate.set_preset_mode("manual")
     await atag.climate.set_temp(11)

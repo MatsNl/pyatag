@@ -48,17 +48,16 @@ def discover_atag():
     """Discover Atag on local network."""
     # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)',
     # ('xxx.xxx.x.x', xxxx)]
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(15)
-
-    sock.bind(("0.0.0.0", 11000))
+    sock.settimeout(30)
+    sock.bind(("", 11000))
     try:
-        result = sock.recvfrom(37)
-        host_ip = result[1][0]
-        device_id = result[0].decode().split()[1]
-        return host_ip, device_id
+        while True:
+            result = sock.recvfrom(37)
+            host_ip = result[1][0]
+            device_id = result[0].decode().split()[1]
+            return host_ip, device_id
     except socket.timeout:
-        pass
+        return False
     except Exception as err:
         raise RequestError(err)

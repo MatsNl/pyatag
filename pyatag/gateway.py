@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 
 import aiohttp
 import async_timeout
+from pyatag import errors
 
 from .entities import DHW, Climate, Report
-from .errors import AtagException, raise_error
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,8 +72,11 @@ class AtagOne:
         try:
             await self.request("post", "pair", json)
 
-        except AtagException as err:
-            _LOGGER.debug("Authorization failed: %s", err)
+        except errors.Unauthorized as err:
+            _LOGGER.debug("Received unauthorized message, try with email address")
+            raise err
+        except errors.AtagException as err:
+            _LOGGER.debug("Authorization failed: %s", type(err))
             raise err
         self._authorized = True
         _LOGGER.debug("Authorized successfully")
@@ -90,16 +93,23 @@ class AtagOne:
             self._last_call = datetime.utcnow()
             try:
                 _LOGGER.debug("Calling %s for %s", self.host, path)
-                with async_timeout.timeout(15):
+                with async_timeout.timeout(30):
                     async with self.session.request(meth, url, json=json) as res:
                         data = await res.json()
                         _raise_on_error(data)
                         return data
-            except (aiohttp.ClientConnectorError, TimeoutError) as err:
-                raise_error(err, 2)
-            except Exception as err:
-                _LOGGER.debug("Caught unexpected exception %s", err)
-                raise_error(err, 5)
+            except aiohttp.ClientConnectionError as err:
+                _LOGGER.debug("Failed to connect to %s", self.host)
+                errors.raise_error(err, 2)
+            except aiohttp.ClientResponseError as err:
+                _LOGGER.debug("Caught response error: %s", err)
+                errors.raise_error(err, 3)
+            except aiohttp.InvalidURL as err:
+                _LOGGER.debug("Could not connect, url %s is incorrect", url)
+                errors.raise_error(err, 2)
+            except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+                _LOGGER.debug("Unknown error occurred")
+                errors.raise_error(err, 5)
 
     async def update(self, info=71, force=False):
         """Get latest data from API."""
@@ -113,7 +123,7 @@ class AtagOne:
         try:
             _LOGGER.debug("Queueing data update")
             res = await self.request("get", "retrieve", json, force)
-        except AtagException as err:
+        except errors.AtagException as err:
             _LOGGER.debug("Update failed: %s", err)
             raise err
         res = res["retrieve_reply"]
@@ -148,19 +158,24 @@ class AtagOne:
                 )
         try:
             res = await self.request("post", "update", json)
-        except AtagException as err:
-            _LOGGER.debug("Failed to set Atag: %s", err)
-            return False
+        except errors.Unauthorized:
+            raise errors.Unauthorized(
+                "Failed to set Atag, received unauthorized message"
+            )
+        except errors.RequestError:
+            raise errors.RequestError("Failed to set Atag, could not complete request")
+        except errors.AtagException:
+            raise errors.UnknownAtagError("Failed to set Atag, unknown error occurred")
         return res["update_reply"]
 
 
 def _raise_on_error(data):
     """Check response for error message."""
     if data[list(data.keys())[0]]["acc_status"] != 2:
-        raise_error(data, 1)
+        errors.raise_error(data, 1)
 
     if isinstance(data, list):
         data = data[0]
 
     if isinstance(data, dict) and "error" in data:
-        raise_error(data)
+        errors.raise_error(data)
