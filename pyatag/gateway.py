@@ -91,25 +91,30 @@ class AtagOne:
                 _LOGGER.debug("Sleeping for %ss", 3 - slept)
                 await asyncio.sleep(3 - slept)
             self._last_call = datetime.utcnow()
-            try:
-                _LOGGER.debug("Calling %s for %s", self.host, path)
-                with async_timeout.timeout(30):
-                    async with self.session.request(meth, url, json=json) as res:
+            for tries in range(4):
+                try:
+                    _LOGGER.debug("Calling %s for %s", self.host, path)
+                    async with self.session.post(url, json=json) as res:
                         data = await res.json()
                         _raise_on_error(data)
                         return data
-            except aiohttp.ClientConnectionError as err:
-                _LOGGER.debug("Failed to connect to %s", self.host)
-                errors.raise_error(err, 2)
-            except aiohttp.ClientResponseError as err:
-                _LOGGER.debug("Caught response error: %s", err)
-                errors.raise_error(err, 3)
-            except aiohttp.InvalidURL as err:
-                _LOGGER.debug("Could not connect, url %s is incorrect", url)
-                errors.raise_error(err, 2)
-            except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-                _LOGGER.debug("Unknown error occurred")
-                errors.raise_error(err, 5)
+                except aiohttp.ServerDisconnectedError as err:
+                    if tries == 3:
+                        _LOGGER.debug("Server disconnected unexpectedly 3 times, giving up")
+                        errors.raise_error(err, 2)
+                    _LOGGER.debug("Server disconnected unexpectedl: %s", tries)
+                except aiohttp.ClientConnectionError as err:
+                    _LOGGER.debug("Failed to connect to %s", self.host)
+                    errors.raise_error(err, 2)
+                except aiohttp.ClientResponseError as err:
+                    _LOGGER.debug("Caught response error: %s", err)
+                    errors.raise_error(err, 3)
+                except aiohttp.InvalidURL as err:
+                    _LOGGER.debug("Could not connect, url %s is incorrect", url)
+                    errors.raise_error(err, 2)
+                except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+                    _LOGGER.debug("Unknown error occurred")
+                    errors.raise_error(err, 5)
 
     async def update(self, info=71, force=False):
         """Get latest data from API."""
@@ -122,7 +127,7 @@ class AtagOne:
         }
         try:
             _LOGGER.debug("Queueing data update")
-            res = await self.request("get", "retrieve", json, force)
+            res = await self.request("post", "retrieve", json, force)
         except errors.AtagException as err:
             _LOGGER.debug("Update failed: %s", err)
             raise err
