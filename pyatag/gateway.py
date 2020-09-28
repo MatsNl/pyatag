@@ -6,7 +6,6 @@ import uuid
 from datetime import datetime, timedelta
 
 import aiohttp
-import async_timeout
 from pyatag import errors
 
 from .entities import DHW, Climate, Report
@@ -100,7 +99,9 @@ class AtagOne:
                         return data
                 except aiohttp.ServerDisconnectedError as err:
                     if tries == 3:
-                        _LOGGER.debug("Server disconnected unexpectedly 3 times, giving up")
+                        _LOGGER.debug(
+                            "Server disconnected unexpectedly 3 times, giving up"
+                        )
                         errors.raise_error(err, 2)
                     _LOGGER.debug("Server disconnected unexpectedl: %s", tries)
                 except aiohttp.ClientConnectionError as err:
