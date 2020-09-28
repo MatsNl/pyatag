@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.3.4]
+- Add automatic retry on server disconnect error
+
 ## [0.3.3]
 - Remove sleep from updater (request only)
 - Raise errors on auth and update failure
