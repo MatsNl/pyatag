@@ -213,7 +213,7 @@ class Climate:
     def flame(self):
         """Return flame level."""
         if self.status:
-            return self._report["flame"].state
+            return self._report["rel_mod_level"].state
         return 0
 
     @property
