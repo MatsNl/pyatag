@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 '''
 Provides connection to ATAG One Thermostat REST API
 
@@ -9,9 +8,10 @@ from pytag.gateway import AtagDataStore
 from pyatag.helpers import insert_in_db
 '''
 import asyncio
-import json
 # import pprint
 import datetime
+import json
+
 
 async def test():
     """Test connection with imported TESTDATA dict"""

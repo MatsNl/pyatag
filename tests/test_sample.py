@@ -1,20 +1,11 @@
-'''
-Test for basic ATAG ONE communication
-
-This tests the basic communication with the ATAG ONE thermostat. It autodiscovers the thermostat 
-and receives a report with all sensor information. 
-
-
-Note: If the discovery does not work, make sure that your firewall allows incoming connections on port 11000 on your local network.
-'''
-
 import asyncio
-from pprint import pprint
-import async_timeout
-from pyatag.gateway import AtagDataStore
-from pyatag import discovery
 import logging
+from pprint import pprint
+
 import aiohttp
+import async_timeout
+from pyatag import discovery
+from pyatag.gateway import AtagDataStore
 
 _LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -31,12 +22,12 @@ async def run_search_explicit(websession):
     if not host:
         return False
     atag = AtagDataStore(host=host, device=device)
-    _LOGGER.info('Found device {} at {}'.format(device, host))
+    _LOGGER.info(f'Found device {device} at {host}')
 
     await atag.async_update()
 
     for k, v in atag.sensordata.items():
-        print('{}: {}'.format(k, v))
+        print(f'{k}: {v}')
 
     await atag.async_close()
 
@@ -48,7 +39,7 @@ async def run_search_integrated(websession):
     await atag.async_update()
 
     for k, v in atag.sensordata.items():
-        print('{}: {}'.format(k, v))
+        print(f'{k}: {v}')
 
     await atag.async_close()
 
@@ -60,7 +51,7 @@ async def run_search_integrated_paired(websession):
     await atag.async_update()
 
     for k, v in atag.sensordata.items():
-        print('{}: {}'.format(k, v))
+        print(f'{k}: {v}')
 
     await atag.async_close()
 

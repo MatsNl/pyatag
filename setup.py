@@ -1,24 +1,24 @@
-"""Prepare for Pypi."""
+"""Setup script."""
+from setuptools import setup
 
-from distutils.core import setup
+long_description = open("README.md").read()
 
 setup(
-    name="pyatag",  # How you named your package folder (MyLib)
-    packages=["pyatag"],  # Chose the same as "name"
-    version="0.2.19",  # Sta2t with a small number
+    name="pyatag",
+    version="0.3.4.4",
     license="MIT",
-    description="Connection to ATAG One Thermostat",
-    author="Mats",  # Type in your name
-    author_email="mats.nelissen@gmail.com",  # Type in your E-Mail
     url="https://github.com/MatsNl/pyatag",
-    install_requires=["asyncio", "aiohttp",],
+    author="Mats Nelissen",
+    description="Python module to talk to Atag One.",
+    packages=["pyatag"],
+    zip_safe=True,
+    platforms="any",
+    install_requires=list(val.strip() for val in open("requirements.txt")),
     classifiers=[
-        "Development Status :: 3 - Alpha",
-        #    'Intended Audience :: Developers',    # Define developer audience
-        #    'Topic :: Software Development :: Build Tools',
-        "License :: OSI Approved :: MIT License",  # Again, pick a license
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
+        "Intended Audience :: Developers",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
 )

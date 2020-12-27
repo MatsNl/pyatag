@@ -2,8 +2,6 @@ input.py
 __pycache__
 update
 .vscode/launch.json
-.vscode/settings.json
 .DS_Store
-.env
-pyatag.egg-info
+pyatag.egg-info/*
 dist/*

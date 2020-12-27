@@ -1,21 +1,28 @@
 """Automatic discovery of ATAG Thermostat on LAN."""
 import asyncio
-from .helpers import RequestError
+import logging
+import socket
+
+from .errors import RequestError
 
 ATAG_UDP_PORT = 11000
 LOCALHOST = "0.0.0.0"
+_LOGGER = logging.getLogger(__name__)
 
 
 class Discovery(asyncio.DatagramProtocol):
     """Discovery class."""
 
     def __init__(self):
+        """Start listener."""
         self.data = asyncio.Future()
 
     def connection_made(self, transport):
-        print("Listening on UDP {}".format(ATAG_UDP_PORT))
+        """Log connection made."""
+        _LOGGER.debug("Listening on UDP %s", ATAG_UDP_PORT)
 
     def datagram_received(self, data, addr):
+        """Record broadcasted data."""
         self.data.set_result([data, addr])
 
 
@@ -41,17 +48,16 @@ def discover_atag():
     """Discover Atag on local network."""
     # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)',
     # ('xxx.xxx.x.x', xxxx)]
-    import socket
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(30)
     sock.bind(("", 11000))
     try:
-       result = sock.recvfrom(37)
-       host_ip = result[1][0]
-       device_id = result[0].decode().split()[1]
+        while True:
+            result = sock.recvfrom(37)
+            host_ip = result[1][0]
+            device_id = result[0].decode().split()[1]
+            return host_ip, device_id
     except socket.timeout:
-        pass
+        return False
     except Exception as err:
         raise RequestError(err)
-    return host_ip, device_id

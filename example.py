@@ -1,16 +1,9 @@
-# PyAtag
-
-## Asynchronous library to control Atag One
-
-Requires Python 3.x and uses asyncio and aiohttp.
-
-```python
+"""Example program to test pyatag."""
 import asyncio
 import logging
 
 import aiohttp
 from pyatag import AtagException, AtagOne
-from pyatag.discovery import async_discover_atag
 
 logging.basicConfig()
 _LOGGER = logging.getLogger(__name__)
@@ -25,9 +18,7 @@ async def main():
 
 async def run(session):
     """Run example main program."""
-    atag_ip, atag_id = await async_discover_atag() # for auto discovery, requires access to UDP broadcast (hostnet)
-    # atag_ip = "atag.local"
-    atag = AtagOne(atag_ip, session, email=None)
+    atag = AtagOne("atag.local", session, email=None)
     try:
         await atag.authorize()
         await atag.update(force=True)
@@ -51,4 +42,3 @@ async def run(session):
 
 
 asyncio.run(main())
-```
