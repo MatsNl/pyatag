@@ -213,7 +213,7 @@ class Climate:
     def flame(self):
         """Return flame level."""
         if self.status:
-            return self._report["flame"].state
+            return self._report["rel_mod_level"].state
         return 0
 
     @property
@@ -280,7 +280,7 @@ class DHW:
     def flame(self):
         """Return flame level if active for DHW."""
         if self.status:
-            return self._report["flame"].state
+            return self._report["rel_mod_level"].state
         return 0
 
     @property
@@ -302,8 +302,8 @@ class DHW:
     def target_temperature(self):
         """Return dhw target temperature."""
         if self.status:
-            return self._report["dhw_temp_setp"].state
-        return self._report["dhw_mode_temp"].state
+            return self._report["dhw_mode_temp"].state
+        return self._report["dhw_temp_setp"].state
 
     @property
     def current_operation(self):

@@ -35,7 +35,7 @@ async def run(session):
         )
 
     await atag.climate.set_preset_mode("manual")
-    await atag.climate.set_temp(11)
+    await atag.climate.set_temp(21)
 
     _LOGGER.debug(atag.report.report_time)
     _LOGGER.debug(atag.dhw.temperature)
