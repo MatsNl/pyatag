@@ -304,7 +304,7 @@ class DHW:
         if self.status:
             return self._report["dhw_mode_temp"].state
         return self._report["dhw_temp_setp"].state
-
+    
     @property
     def current_operation(self):
         """Return the current operating mode (Eco or Performance (Comfort)."""

@@ -42,7 +42,13 @@ STATES = {
         13: {"state": "Unknown", "icon": "mdi:cloud-question"},
     },
     "temp_unit": {0: "°C", 1: "°F"},
-    "ch_mode": {1: "manual", 2: "automatic", 3: "vacation", 4: "extend", 5: "fireplace"},
+    "ch_mode": {
+        1: "manual",
+        2: "automatic",
+        3: "vacation",
+        4: "extend",
+        5: "fireplace",
+    },
     "ch_control_mode": {0: "heat", 1: "auto"},
     "dhw_mode": {0: "performance", 1: "eco"},
 }
