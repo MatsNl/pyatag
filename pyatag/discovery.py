@@ -1,13 +1,12 @@
 """Automatic discovery of ATAG Thermostat on LAN."""
 import asyncio
-import logging
 import socket
 
+from .const import _LOGGER
 from .errors import RequestError
 
 ATAG_UDP_PORT = 11000
 LOCALHOST = "0.0.0.0"
-_LOGGER = logging.getLogger(__name__)
 
 
 class Discovery(asyncio.DatagramProtocol):
@@ -48,7 +47,11 @@ def discover_atag():
     """Discover Atag on local network."""
     # return format: [b'ONE xxxx-xxxx-xxxx_xx-xx-xxx-xxx (ST)',
     # ('xxx.xxx.x.x', xxxx)]
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  # UDP
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
     sock.settimeout(30)
     sock.bind(("", 11000))
     try:

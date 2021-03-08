@@ -1,4 +1,7 @@
 """Constants for ATAG API."""
+import logging
+
+_LOGGER = logging.getLogger(__package__)
 CLASSES = {
     "temp": ["temperature", None, "mdi:thermometer"],
     "pres": ["pressure", "bar", "mdi:gauge"],

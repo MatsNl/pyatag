@@ -1,6 +1,5 @@
 """Gateway connecting to ATAG thermostat."""
 import asyncio
-import logging
 import re
 import uuid
 from datetime import datetime, timedelta
@@ -8,9 +7,8 @@ from datetime import datetime, timedelta
 import aiohttp
 from pyatag import errors
 
+from .const import _LOGGER
 from .entities import DHW, Climate, Report
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class AtagOne:

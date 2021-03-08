@@ -26,7 +26,6 @@ async def main():
 async def run(session):
     """Run example main program."""
     atag_ip, atag_id = await async_discover_atag() # for auto discovery, requires access to UDP broadcast (hostnet)
-    # atag_ip = "atag.local"
     atag = AtagOne(atag_ip, session, email=None)
     try:
         await atag.authorize()
