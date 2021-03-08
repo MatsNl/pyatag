@@ -1,4 +1,6 @@
 # Changelog
+## [0.3.5]
+- merge bug fixes from PR
 
 ## [0.3.4]
 - Add automatic retry on server disconnect error
