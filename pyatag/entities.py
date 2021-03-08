@@ -227,7 +227,7 @@ class Climate:
 
     @property
     def preset_mode(self):
-        """Return the preset mode (Manual/Auto/Extend/Vacation/Fireplace)."""
+        """Return the preset mode (manual/automatic/extend/vacation/fireplace)."""
         return self._report["ch_mode"].state
 
     @property
@@ -236,7 +236,7 @@ class Climate:
         return self._report["ch_mode_duration"].state
 
     async def set_preset_mode(self, target: str, **kwargs) -> bool:
-        """Set the hold mode (Manual/Auto/Extend/Vacation/Fireplace)."""
+        """Set the hold mode (manual/automatic/extend/vacation/fireplace)."""
         await self._report["ch_mode"].set_state(target)
 
     @property
@@ -304,7 +304,7 @@ class DHW:
         if self.status:
             return self._report["dhw_temp_setp"].state
         return self._report["dhw_mode_temp"].state
-    
+
     @property
     def current_operation(self):
         """Return the current operating mode (Eco or Performance (Comfort)."""

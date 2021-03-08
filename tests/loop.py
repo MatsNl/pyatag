@@ -1,15 +1,15 @@
-'''
+"""
 Provides connection to ATAG One Thermostat REST API
 
 #__version__ = '0.1.5'
 __all__ = ["pyatag"]
 
 from pytag.gateway import AtagDataStore
-'''
+"""
 import asyncio
 from contextlib import suppress
 
-#from tests.test import insert_in_db
+# from tests.test import insert_in_db
 # import pprint
 
 
@@ -18,19 +18,22 @@ async def test():
     from pyatag.gateway import AtagDataStore
     import aiohttp
     from tests.input import TESTDATA, SQLSERVER
+
     # pretty = pprint.PrettyPrinter(indent=2)
     async with aiohttp.ClientSession() as session:
-        atag = AtagDataStore(host=TESTDATA["_host"],
-                             port=TESTDATA["_port"],
-                             # mail=None, # test with mail == None
-                             mail=TESTDATA["_mail"],
-                             interface=None,  # TESTDATA["_interface"],
-                             session=session)
+        atag = AtagDataStore(
+            host=TESTDATA["_host"],
+            port=TESTDATA["_port"],
+            # mail=None, # test with mail == None
+            mail=TESTDATA["_mail"],
+            interface=None,  # TESTDATA["_interface"],
+            session=session,
+        )
         print("Starting loop")
         print(atag.sensordata)
         while True:
             await atag.async_update()
-            print('Updated at: {}'.format(atag.sensordata['date_time']))
+            print("Updated at: {}".format(atag.sensordata["date_time"]))
             assert atag.paired
             await insert_in_db(atag.sensordata, SQLSERVER, LOOP)
 
@@ -44,6 +47,7 @@ async def main():
     task.cancel()
     with suppress(asyncio.CancelledError):
         await task
+
 
 try:
     LOOP = asyncio.new_event_loop()

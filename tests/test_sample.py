@@ -15,6 +15,7 @@ async def main(target):
     async with aiohttp.ClientSession() as session:
         await target(session)
 
+
 async def run_search_explicit(websession):
 
     with async_timeout.timeout(10):
@@ -22,12 +23,12 @@ async def run_search_explicit(websession):
     if not host:
         return False
     atag = AtagDataStore(host=host, device=device)
-    _LOGGER.info(f'Found device {device} at {host}')
+    _LOGGER.info(f"Found device {device} at {host}")
 
     await atag.async_update()
 
     for k, v in atag.sensordata.items():
-        print(f'{k}: {v}')
+        print(f"{k}: {v}")
 
     await atag.async_close()
 
@@ -39,7 +40,7 @@ async def run_search_integrated(websession):
     await atag.async_update()
 
     for k, v in atag.sensordata.items():
-        print(f'{k}: {v}')
+        print(f"{k}: {v}")
 
     await atag.async_close()
 
@@ -51,8 +52,9 @@ async def run_search_integrated_paired(websession):
     await atag.async_update()
 
     for k, v in atag.sensordata.items():
-        print(f'{k}: {v}')
+        print(f"{k}: {v}")
 
     await atag.async_close()
+
 
 asyncio.get_event_loop().run_until_complete(main(run_search_integrated_paired))
