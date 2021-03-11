@@ -29,7 +29,7 @@ async def run(session):
     atag = AtagOne(atag_ip, session)
     try:
         await atag.authorize()
-        await atag.update(force=True)
+        await atag.update()
     except AtagException as err:
         _LOGGER.error(err)
         return False
