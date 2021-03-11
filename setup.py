@@ -5,10 +5,9 @@ long_description = open("README.md").read()
 
 setup(
     name="pyatag",
-    version="0.3.5.2",
     license="MIT",
     url="https://github.com/MatsNl/pyatag",
-    author="Mats Nelissen",
+    author="@MatsNL",
     description="Python module to talk to Atag One.",
     packages=["pyatag"],
     zip_safe=True,

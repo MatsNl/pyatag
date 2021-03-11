@@ -116,9 +116,8 @@ class Sensor:
         """Return the icon corresponding to the state."""
         if self._info:
             return self._info[2]
-        if self._states is not None:
-            if isinstance(self._states[self.raw], dict):
-                return self._states[self.raw]["icon"]
+        elif self._states and isinstance(self._states[self.raw], dict):
+            return self._states[self.raw]["icon"]
         return None
 
     @property

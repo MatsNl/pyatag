@@ -1,33 +1,39 @@
 """Gateway connecting to ATAG thermostat."""
 import asyncio
 import re
+import socket  # together with your other imports
 import uuid
 from datetime import datetime, timedelta
 
 import aiohttp
-from pyatag import errors
 
+from . import __version__, errors
 from .const import _LOGGER
 from .entities import DHW, Climate, Report
+
+USER_AGENT = "Mozilla/5.0 (compatible; AtagOneAPI/x; http://atag.one/)"
+REQUEST_HEADER_USER_AGENT = "User-Agent"
+REQUEST_HEADER_X_ONEAPP_VERSION = "X-OneApp-Version"
+HEADERS = {
+    REQUEST_HEADER_USER_AGENT: USER_AGENT,
+    REQUEST_HEADER_X_ONEAPP_VERSION: f"{__package__}-{__version__}",
+}
 
 
 class AtagOne:
     """Central data store entity."""
 
-    def __init__(self, host, session, device=None, email=None, port=10000):
+    def __init__(self, host, session=None, device=None, email=None, port=10000):
         """Initialize main AtagOne object."""
+        del email  # email is not needed for local connections
         self.host = host
-        self.email = email or ""
         self.port = port
-        if email is None:
-            _LOGGER.debug("No email address provided.")
-        self.session = session
         self._device = device
-        self._authorized = device is not None
-        self._mac = ":".join(re.findall("..", "%012x" % uuid.getnode()))
+        self._authorized = device is not None  # assume authorized if device id is known
+        self._mac = "-".join(re.findall("..", "%012x" % uuid.getnode())).upper()
         self._last_call = datetime(1970, 1, 1)
         self._lock = asyncio.Lock()
-
+        self._session = session or aiohttp.ClientSession()
         self.climate = None
         self.dhw = None
         self.report = None
@@ -36,7 +42,7 @@ class AtagOne:
     def id(self):
         """Return the ID of the bridge."""
         if self.report:
-            return self.report["device_id"].state
+            self._device = self.report["device_id"].state
         return self._device
 
     @property
@@ -45,91 +51,80 @@ class AtagOne:
         if self.report:
             return self.report["download_url"].state
 
+    @property
+    def authorized(self):
+        """Return authorization status."""
+        return self._authorized
+
+    @authorized.setter
+    def authorized(self, data):
+        """Check response for error message."""
+        self._authorized = data[list(data.keys())[0]]["acc_status"] == 2
+        if not self._authorized:
+            raise errors.Unauthorized("Received unauthorized message from device!")
+
     async def authorize(self):
         """Check auth status."""
-        if self._authorized:
-            _LOGGER.debug("Not checking auth status as ID was provided")
-            return True
-        json = {
-            "pair_message": {
-                "seqnr": 1,
-                "account_auth": {"user_account": self.email, "mac_address": self._mac},
-                "accounts": {
-                    "entries": [
-                        {
-                            "user_account": self.email,
-                            "mac_address": self._mac,
-                            "device_name": "HomeAssistant",
-                            "account_type": 1,
-                        }
-                    ]
-                },
+        if not self.authorized:
+            json = {
+                "pair_message": {
+                    "seqnr": 0,
+                    "account_auth": {"user_account": "", "mac_address": self._mac},
+                    "accounts": {
+                        "entries": [
+                            {
+                                "user_account": "",  # self.email,
+                                "mac_address": self._mac,
+                                "device_name": socket.gethostname(),
+                                "account_type": 0,
+                            }
+                        ]
+                    },
+                }
             }
-        }
-        try:
-            await self.request("post", "pair", json)
+            await self.request("pair", json)
+            _LOGGER.debug("Authorized successfully.")
+        return self.authorized
 
-        except errors.Unauthorized as err:
-            _LOGGER.debug("Received unauthorized message, try with email address")
-            raise err
-        except errors.AtagException as err:
-            _LOGGER.debug("Authorization failed: %s", type(err))
-            raise err
-        self._authorized = True
-        _LOGGER.debug("Authorized successfully")
-        return True
-
-    async def request(self, meth, path, json=None, force=False):
+    async def request(self, path, json=None):
         """Make a request to the API."""
         url = f"http://{self.host}:{self.port}/{path}"
         async with self._lock:
-            slept = (datetime.utcnow() - self._last_call).total_seconds()
-            if slept < 3 and not force:
-                _LOGGER.debug("Sleeping for %ss", 3 - slept)
-                await asyncio.sleep(3 - slept)
-            self._last_call = datetime.utcnow()
-            for tries in range(4):
+            for tries in range(10):
+                await asyncio.sleep(
+                    1 - (datetime.utcnow() - self._last_call).total_seconds()
+                )
+                self._last_call = datetime.utcnow()
+                _LOGGER.debug(f"Call {tries+1} to {self.host} for {path}")
                 try:
-                    _LOGGER.debug("Calling %s for %s", self.host, path)
-                    async with self.session.post(url, json=json) as res:
-                        data = await res.json()
-                        _raise_on_error(data)
+                    async with self._session.post(
+                        url, headers=HEADERS, json=json
+                    ) as res:
+                        self.authorized = data = await res.json()
                         return data
-                except aiohttp.ServerDisconnectedError as err:
-                    if tries == 3:
-                        _LOGGER.debug(
-                            "Server disconnected unexpectedly 3 times, giving up"
-                        )
-                        errors.raise_error(err, 2)
-                    _LOGGER.debug("Server disconnected unexpectedl: %s", tries)
-                except aiohttp.ClientConnectionError as err:
-                    _LOGGER.debug("Failed to connect to %s", self.host)
-                    errors.raise_error(err, 2)
-                except aiohttp.ClientResponseError as err:
-                    _LOGGER.debug("Caught response error: %s", err)
-                    errors.raise_error(err, 3)
-                except aiohttp.InvalidURL as err:
-                    _LOGGER.debug("Could not connect, url %s is incorrect", url)
-                    errors.raise_error(err, 2)
-                except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-                    _LOGGER.debug("Unknown error occurred")
-                    errors.raise_error(err, 5)
+                except (
+                    aiohttp.ServerDisconnectedError,
+                    aiohttp.ClientError,
+                    asyncio.CancelledError,
+                ) as err:
+                    if tries < 9 and isinstance(err, aiohttp.ServerDisconnectedError):
+                        continue
+                    raise errors.ConnectionError(
+                        f"Giving up after {type(err).__name__} (attempts: {tries+1})"
+                    ) from err
 
-    async def update(self, info=71, force=False):
+    async def update(self, info=71):
         """Get latest data from API."""
+        if not self.authorized:
+            await self.authorize()
         json = {
             "retrieve_message": {
-                "seqnr": 1,
-                "account_auth": {"user_account": self.email, "mac_address": self._mac},
+                "seqnr": 0,
+                "account_auth": {"user_account": "", "mac_address": self._mac},
                 "info": info,
             }
         }
-        try:
-            _LOGGER.debug("Queueing data update")
-            res = await self.request("post", "retrieve", json, force)
-        except errors.AtagException as err:
-            _LOGGER.debug("Update failed: %s", err)
-            raise err
+        res = await self.request("retrieve", json)
         res = res["retrieve_reply"]
         res["report"].update(res["report"].pop("details"))
         if self.report is None:
@@ -142,10 +137,12 @@ class AtagOne:
 
     async def setter(self, **kwargs):
         """Set control items."""
+        if not self.authorized:
+            await self.authorize()
         json = {
             "update_message": {
-                "seqnr": 1,
-                "account_auth": {"user_account": self.email, "mac_address": self._mac},
+                "seqnr": 0,
+                "account_auth": {"user_account": "", "mac_address": self._mac},
                 "control": {},
                 "configuration": {},
             }
@@ -160,26 +157,5 @@ class AtagOne:
                 json["update_message"]["configuration"]["start_vacation"] = int(
                     (datetime.utcnow() - datetime(2000, 1, 1)).total_seconds()
                 )
-        try:
-            res = await self.request("post", "update", json)
-        except errors.Unauthorized:
-            raise errors.Unauthorized(
-                "Failed to set Atag, received unauthorized message"
-            )
-        except errors.RequestError:
-            raise errors.RequestError("Failed to set Atag, could not complete request")
-        except errors.AtagException:
-            raise errors.UnknownAtagError("Failed to set Atag, unknown error occurred")
+        res = await self.request("update", json)
         return res["update_reply"]
-
-
-def _raise_on_error(data):
-    """Check response for error message."""
-    if data[list(data.keys())[0]]["acc_status"] != 2:
-        errors.raise_error(data, 1)
-
-    if isinstance(data, list):
-        data = data[0]
-
-    if isinstance(data, dict) and "error" in data:
-        errors.raise_error(data)

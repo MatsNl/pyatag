@@ -3,7 +3,9 @@ import asyncio
 import logging
 
 import aiohttp
+
 from pyatag import AtagException, AtagOne
+from pyatag.discovery import async_discover_atag
 
 logging.basicConfig()
 _LOGGER = logging.getLogger(__name__)
@@ -18,10 +20,12 @@ async def main():
 
 async def run(session):
     """Run example main program."""
-    atag = AtagOne("atag.local", session, email=None)
+    atag_ip, device_id = await async_discover_atag()
+    _LOGGER.info(f"Found Atag device {device_id }at address {atag_ip}")
+    atag = AtagOne(atag_ip, session)
     try:
         await atag.authorize()
-        await atag.update(force=True)
+        await atag.update()
     except AtagException as err:
         _LOGGER.error(err)
         return False

@@ -1,4 +1,8 @@
 """Provides connection to ATAG One Thermostat REST API."""
-from .const import DEFAULT_PORT  # noqa
-from .errors import AtagException  # noqa
-from .gateway import AtagOne  # noqa
+
+__version__ = "0.3.5.3"
+
+from .errors import *  # noqa
+from .gateway import AtagOne
+
+assert AtagOne

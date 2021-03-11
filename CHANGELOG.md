@@ -1,4 +1,8 @@
 # Changelog
+## [0.3.6]
+- set request retries to 10 and reduce sleep (reduces failures)
+- stop using email, not needed for local connections
+- remove tests for now
 ## [0.3.5]
 - merge bug fixes from PR
 - merge #6
