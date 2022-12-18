@@ -164,12 +164,20 @@ class Control(Sensor):
         target_int = None
         if self._states is not None:
             target = {v.lower(): v for v in self._states.values()}.get(target.lower())
-            target_int = {v: k for k, v in self._states.items()}.get(target)
+            target_int = {v: k for k, v in self._states.items()}.get(target.lower())
         if target == self.state:
             return True
         self._target = target
         self._last_call = datetime.utcnow()
-        return await self._setter(**{self.id: target_int or target})
+        return await self._setter(**{self.id: target_int})
+
+    async def set_temp(self, target):
+        """Set the Control to a new target state."""
+        if target == self.state:
+            return True
+        self._target = target
+        self._last_call = datetime.utcnow()
+        return await self._setter(**{self.id: target})
 
 
 class Climate:
@@ -220,7 +228,7 @@ class Climate:
         """Return the operating mode (Weather or Regular/Heat)."""
         return self._report["ch_control_mode"].state
 
-    async def set_hvac_mode(self, target: str) -> bool:
+    async def set_hvac_mode(self, target: str) -> int:
         """Set the operating mode (Weather or Regular/Heat)."""
         await self._report["ch_control_mode"].set_state(target)
 
@@ -234,7 +242,7 @@ class Climate:
         """Return remaining time on preset mode."""
         return self._report["ch_mode_duration"].state
 
-    async def set_preset_mode(self, target: str, **kwargs) -> bool:
+    async def set_preset_mode(self, target: str, **kwargs) -> int:
         """Set the hold mode (manual/automatic/extend/vacation/fireplace)."""
         await self._report["ch_mode"].set_state(target)
 
@@ -250,7 +258,7 @@ class Climate:
 
     async def set_temp(self, target: float):
         """Set target temperature."""
-        await self._report["ch_mode_temp"].set_state(target)
+        await self._report["ch_mode_temp"].set_temp(target)
 
 
 class DHW:
@@ -311,4 +319,4 @@ class DHW:
 
     async def set_temp(self, target: float):
         """Set dhw target temperature."""
-        await self._report["dhw_temp_setp"].set_state(target)
+        await self._report["dhw_temp_setp"].set_temp(target)
