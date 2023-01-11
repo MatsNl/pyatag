@@ -4,14 +4,14 @@ repos:
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
-  - repo: https://github.com/psf/black
-    rev: 20.8b1
-    hooks:
-      - id: black
-        args:
-          - --safe
-          - --quiet
-        files: ^((pyatag)/.+)?[^/]+\.py$
+  # - repo: https://github.com/psf/black
+  #   rev: 20.8b1
+  #   hooks:
+  #     - id: black
+  #       args:
+  #         - --safe
+  #         - --quiet
+  #       files: ^((pyatag)/.+)?[^/]+\.py$
   - repo: https://github.com/codespell-project/codespell
     rev: v2.0.0
     hooks:
@@ -22,17 +22,17 @@ repos:
           - --quiet-level=2
         exclude_types: [csv, json]
         exclude: ^tests/fixtures/
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
-    hooks:
-      - id: flake8
-        additional_dependencies:
-          - flake8-docstrings==1.5.0
-          # Temporarily every now and then for noqa cleanup; not done by
-          # default yet due to https://github.com/plinss/flake8-noqa/issues/1
-          # - flake8-noqa==1.1.0
-          - pydocstyle==5.1.1
-        files: ^(pyatag)/.+\.py$
+  # - repo: https://gitlab.com/pycqa/flake8
+  #   rev: 3.8.4
+  #   hooks:
+  #     - id: flake8
+  #       additional_dependencies:
+  #         - flake8-docstrings==1.5.0
+  #         # Temporarily every now and then for noqa cleanup; not done by
+  #         # default yet due to https://github.com/plinss/flake8-noqa/issues/1
+  #         # - flake8-noqa==1.1.0
+  #         - pydocstyle==5.1.1
+  #       files: ^(pyatag)/.+\.py$
   - repo: https://github.com/PyCQA/isort
     rev: 5.7.0
     hooks:
