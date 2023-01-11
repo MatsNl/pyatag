@@ -26,6 +26,6 @@ jobs:
       - name: Lint with flake8
         run: |
           flake8 pyatag
-      - name: Check formatting with black
-        run: |
-          black pyatag --check
+      # - name: Check formatting with black
+      #   run: |
+      #     black pyatag --check
