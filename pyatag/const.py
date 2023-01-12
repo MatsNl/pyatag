@@ -52,7 +52,7 @@ STATES = {
         4: "extend",
         5: "fireplace",
     },
-    "ch_control_mode": {0: "auto", 1: "heatß"},
+    "ch_control_mode": {0: "auto", 1: "heat"},
     "dhw_mode": {0: "performance", 1: "eco"},
 }
 DEFAULT_PORT = 10000
